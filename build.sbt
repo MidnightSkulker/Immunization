@@ -11,7 +11,19 @@ lazy val root = (project in file("."))
     libraryDependencies += scalaTest % Test
   )
 
+libraryDependencies ++= Seq(
+  "com.google.apis"         %  "google-api-services-bigquery" % "v2-rev405-1.25.0",
+  "com.google.oauth-client" %  "google-oauth-client"          % "1.25.0",
+  "com.google.oauth-client" %  "google-oauth-client-jetty"    % "1.25.0",
+  "com.google.http-client"  %  "google-http-client-jackson2"  % "1.25.0",
+  "ch.qos.logback"          %  "logback-classic"              % "1.2.3"   % Test,
+  "org.scalatest"           %% "scalatest"                    % "3.0.5"   % Test
+)
+
 libraryDependencies += "joda-time" % "joda-time" % "2.10.8"
+libraryDependencies += "com.google.apis" % "google-api-services-sheets" % "v4-rev1-1.21.0"
+
+// libraryDependencies += "com.google.api-client" % "google-api-client" % "1.21.0"
 
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
