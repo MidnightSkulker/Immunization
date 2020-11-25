@@ -22,8 +22,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "joda-time" % "joda-time" % "2.10.8"
 libraryDependencies += "com.google.apis" % "google-api-services-sheets" % "v4-rev1-1.21.0"
-
-// libraryDependencies += "com.google.api-client" % "google-api-client" % "1.21.0"
+libraryDependencies += "com.github.benfradet" %% "gsheets4s" % "0.2.0"
 
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
@@ -44,7 +43,8 @@ ThisBuild / scmInfo := Some(
      email = "desourdesourde@gmail.com",
      url   = url("https://github.com/MidnightSkulker/Immunization")
   )
-)
+ )
+
 // ThisBuild / pomIncludeRepository := { _ => false }
 // ThisBuild / publishTo := {
 //   val nexus = "https://oss.sonatype.org/"
