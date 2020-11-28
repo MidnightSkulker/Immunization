@@ -2,6 +2,9 @@
 // This is ignored in the REPL, it just generates a warning.
 package com.twitter.example
 package scala.language.implicitConversions
+// import cats.effect.IO
+import spray.json._
+import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
 
 object factorialDemo {
    def factorial(n: Int): Int = {  
@@ -230,5 +233,23 @@ object HelloWorld {
     println("y4 = " + y4)
     // Only works for scalac
     // println("the color is: " + com.twitter.example.colorHolder.BLUE)
+    // val creds = Credentials(accessToken, refreshToken, clientId, clientSecret)
+    // val io = for {
+    //   service <- GSheetsService[IO](creds)
+    //   res <- service.updateAndGet
+    // } yield res
+    // io.unsafeRunSync()
+
+    // JSON
+    val source = """{ "some": "JSON source" }"""
+    val jsonAst = source.parseJson // or JsonParser(source)
+    val json = jsonAst.prettyPrint // or .compactPrint
+    val jsonAst2 = List(1, 2, 3).toJson
+    // val myObject = jsonAst.convertTo[MyObjectType]
+    println("\nsource = " + source)
+    println("jsonAst = " + jsonAst)
+    println("json = " + json)
+    println("jsonAst2 = " + jsonAst2)
+    // println("myObject = " + myObject)
   }
 }
