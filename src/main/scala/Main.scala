@@ -1,10 +1,14 @@
 // Can only declare a package for scalac compilation.
 // This is ignored in the REPL, it just generates a warning.
-package com.twitter.example
-package scala.language.implicitConversions
+// package com.twitter.example
+// package scala.language.implicitConversions
 // import cats.effect.IO
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
+import scala.io.Source._
+import org.joda.time.base.AbstractInstant
+import org.joda.time.DateTime
+import org.joda.time.Period
 
 object factorialDemo {
    def factorial(n: Int): Int = {  
@@ -120,6 +124,46 @@ object colorHolder {
 // Case Classes.
 case class Calculator(brand: String, model: String)
 
+trait VaccineStatus extends Enumeration () {
+  type Status = Value
+  val Incomplete, OutofDate, Complete, None = Value
+}
+
+// Common operations on the doses given.
+class Doses(dob: DateTime, doses: Array[Option[DateTime]]) {
+  // Compute the number of doses of the vaccine given.
+  val currentDate = new DateTime() // For some reason this give the current time.
+  def numberOfDoses(): Int = doses.count(d => !d.isEmpty)
+  def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean = {
+    doses(dose) match {
+      case None => return true
+      case Some(dose) => return (dose.isAfter(dob.plusMonths(startMonth)) &&
+                                (dose.isBefore(dob.plusMonths(endMonth))))
+    }
+  }
+}
+
+// Compute the vaccination status when the child is new born (less than two months old)
+class NewBorn(dob: DateTime, doses: Array[DateTime]) {
+}
+
+// Vaccinations
+// Example names: DTAP, with maximum of 5 shots (vaccinations).
+//                Polio, with maximum of 5 shots (vaccinations).
+class Vaccine(name: String, max: Int) extends VaccineStatus {
+  def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
+    for (j <- 0 to 10) { doses(j) = null }
+    return null
+  }
+  val doses: Array[DateTime] = fillDoses(doses, max)
+  println ("doses.length: ", doses.length)
+}
+
+class DTAP (dob: DateTime) extends Vaccine("DTAP", 5) {
+  val junk: Int = 0
+}
+
+// ----------------------------------------------------------------------------
 object HelloWorld {
   def funSub(x: Int = 9, y: Int = 6) : Int = x - y
   def multiply(m: Int)(n: Int): Int = m * n
@@ -241,15 +285,34 @@ object HelloWorld {
     // io.unsafeRunSync()
 
     // JSON
-    val source = """{ "some": "JSON source" }"""
-    val jsonAst = source.parseJson // or JsonParser(source)
+    val source = """{ "some": "JSON source", "other": "XML" }"""
+    val jsonAst: spray.json.JsValue = source.parseJson // or JsonParser(source)
     val json = jsonAst.prettyPrint // or .compactPrint
     val jsonAst2 = List(1, 2, 3).toJson
-    // val myObject = jsonAst.convertTo[MyObjectType]
+    val myObject = jsonAst.convertTo[Map[String,String]]
     println("\nsource = " + source)
     println("jsonAst = " + jsonAst)
     println("json = " + json)
     println("jsonAst2 = " + jsonAst2)
-    // println("myObject = " + myObject)
+    println("myObject = " + myObject)
+    println("myObject(\"some\") = " + myObject("some"))
+
+    val filename = "fileopen.scala"
+    println("------ > inputs/ImmunizationData.json\n")
+    var j = 0
+    for (line <- fromFile("inputs/ImmunizationData.json").getLines) {
+      if (j < 12) {
+        println(line)
+        j = j + 1
+      }
+    }
   }
 }
+
+// List<String> SCOPES_ARRAY = Arrays.asList(
+//         "https://www.googleapis.com/auth/drive.file",
+//         "https://www.googleapis.com/auth/userinfo.email",
+//         "https://www.googleapis.com/auth/userinfo.profile",
+//         "https://docs.google.com/feeds",
+//         "https://spreadsheets.google.com/feeds");
+// http://blog.pamelafox.org/2013/06/exporting-google-spreadsheet-as-json.html

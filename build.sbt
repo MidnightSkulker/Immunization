@@ -23,8 +23,7 @@ libraryDependencies ++= Seq(
 libraryDependencies += "joda-time" % "joda-time" % "2.10.8"
 libraryDependencies += "com.google.apis" % "google-api-services-sheets" % "v4-rev1-1.21.0"
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.6"
-
-
+libraryDependencies += "com.madgag" %% "scala-io-file" % "0.4.9"
 
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
