@@ -114,7 +114,7 @@ case class Calculator(brand: String, model: String)
 
 trait VaccineStatus extends Enumeration () {
   type Status = Value
-  val Incomplete, OutofDate, Complete, None = Value
+  val Incomplete, UpToDate, Complete, None = Value
 }
 
 trait AgeRange {
