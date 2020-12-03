@@ -11,7 +11,7 @@ import org.joda.time.DateTime
 import org.joda.time.Period
 
 trait VaccineStatus extends Enumeration () {
-  type Status = Value
+  type VaccineStatus = Value
   val Incomplete, UpToDate, Complete, None = Value
 }
 
@@ -52,7 +52,7 @@ trait NewBorn {
 
 
 // Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends AgeRange {
+class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends Enumeration with NewBorn with AgeRange {
   // Compute the number of doses of the vaccine given.
   val currentDate = new DateTime() // For some reason this give the current time.
   def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
@@ -73,14 +73,23 @@ class Vaccine(name: String, max: Int) extends VaccineStatus {
   println ("doses.length: ", doses.length)
 }
 
-class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with NewBorn with Recently {
+class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Younger with VaccineStatus with Recently with NewBorn {
+  def immunizationStatus (): VaccineStatus =
   numberOfDoses(doses) match {
-    case 0 => isNewBorn(dob)
+    case 0 =>
+      if (isNewBorn(dob)) Complete
+      else Incomplete
+    case 1 =>
+      if (youngerThan(4, dob)) Complete
+      else {
+        if (recently(4, doses(0))) Complete
+        else Incomplete
+      }
   }
 }
 
 // ----------------------------------------------------------------------------
-object Immunization Report {
+object ImmunizationReport {
   def main(args: Array[String]): Unit = {
 
     // JSON

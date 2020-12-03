@@ -112,75 +112,6 @@ class AddFive extends (Int => Int) { def apply(m: Int): Int = m + 5 }
 // Case Classes.
 case class Calculator(brand: String, model: String)
 
-trait VaccineStatus extends Enumeration () {
-  type Status = Value
-  val Incomplete, UpToDate, Complete, None = Value
-}
-
-trait AgeRange {
-  def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
-    (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
-  def withinRange(d: Option[DateTime], dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
-    d match {
-      case None => false
-      case Some(d) => (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
-    }
-}
-
-trait Older {
-  def olderThan(numberOfMonths: Int, dob: DateTime): Boolean =
-    dob.plusMonths(numberOfMonths).isBefore(DateTime.now())
-}
-
-trait Younger {
-  def youngerThan(numberOfMonths: Int, dob: DateTime): Boolean =
-    dob.plusMonths(numberOfMonths).isAfter(DateTime.now())
-}
-
-trait Recently {
-  def recently(numberOfMonths: Int, dose: DateTime): Boolean =
-    DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
-  def recently(numberOfMonths: Int, dose: Option[DateTime]): Boolean =
-    dose match {
-      case None => false
-      case Some(dose) => DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
-    }
-}
-
-trait NewBorn {
-  // Determine if the child is new born.
-  def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
-}
-
-
-// Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends AgeRange {
-  // Compute the number of doses of the vaccine given.
-  val currentDate = new DateTime() // For some reason this give the current time.
-  def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
-
- def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
-    withinRange(doses(dose), dob, startMonth, endMonth)
-}
-
-// Vaccinations
-// Example names: DTAP, with maximum of 5 shots (vaccinations).
-//                Polio, with maximum of 5 shots (vaccinations).
-class Vaccine(name: String, max: Int) extends VaccineStatus {
-  def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
-    for (j <- 0 to 10) { doses(j) = null }
-    return null
-  }
-  val doses: Array[DateTime] = fillDoses(doses, max)
-  println ("doses.length: ", doses.length)
-}
-
-class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with NewBorn with Recently {
-  numberOfDoses(doses) match {
-    case 0 => isNewBorn(dob)
-  }
-}
-
 // ----------------------------------------------------------------------------
 object HelloWorld {
   def multiply(m: Int)(n: Int): Int = m * n
@@ -264,8 +195,6 @@ object HelloWorld {
   def main(args: Array[String]): Unit = {
     println("fComposeG(\"yay\") = " + fComposeG("yay"))
     println("fAndThenG(\"yay\") = " + fAndThenG("yay"))
-    println("Difference of the value is: " + funSub());
-    println("Difference of the value is: " + funSub(y = 6, x = 8));
     println("zipl = " + zipl)
     println( "Testing hp20b == hp20B: " + (hp20b == hp20B) )
     println( "Bigger 7.0 ", bigger(7.0))
