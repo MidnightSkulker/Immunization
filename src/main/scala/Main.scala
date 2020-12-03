@@ -10,13 +10,6 @@ import org.joda.time.base.AbstractInstant
 import org.joda.time.DateTime
 import org.joda.time.Period
 
-object factorialDemo {
-   def factorial(n: Int): Int = {  
-      if (n <= 1) return 1
-      else        return n * factorial(n - 1)
-   }
-}
-
 object variableArgument {
   def printAll(strings: String*) : Unit = {
     for( value <- strings ) { println(value); }
@@ -116,11 +109,6 @@ class AddFour extends Function1[Int, Int] { def apply(m: Int): Int = m + 4 }
 // You can extend a function using this syntax.
 class AddFive extends (Int => Int) { def apply(m: Int): Int = m + 5 }
 
-object colorHolder {
-  val BLUE = "Blue"
-  val RED = "Red"
-}
-
 // Case Classes.
 case class Calculator(brand: String, model: String)
 
@@ -129,22 +117,49 @@ trait VaccineStatus extends Enumeration () {
   val Incomplete, OutofDate, Complete, None = Value
 }
 
+trait AgeRange {
+  def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
+    (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
+  def withinRange(d: Option[DateTime], dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
+    d match {
+      case None => false
+      case Some(d) => (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
+    }
+}
+
+trait Older {
+  def olderThan(numberOfMonths: Int, dob: DateTime): Boolean =
+    dob.plusMonths(numberOfMonths).isBefore(DateTime.now())
+}
+
+trait Younger {
+  def youngerThan(numberOfMonths: Int, dob: DateTime): Boolean =
+    dob.plusMonths(numberOfMonths).isAfter(DateTime.now())
+}
+
+trait Recently {
+  def recently(numberOfMonths: Int, dose: DateTime): Boolean =
+    DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
+  def recently(numberOfMonths: Int, dose: Option[DateTime]): Boolean =
+    dose match {
+      case None => false
+      case Some(dose) => DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
+    }
+}
+
+trait NewBorn {
+  // Determine if the child is new born.
+  def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
+}
+
+
 // Common operations on the doses given.
-class Doses(dob: DateTime, doses: Array[Option[DateTime]]) {
+class Doses(dob: DateTime, doses: Array[Option[DateTime]]) extends AgeRange {
   // Compute the number of doses of the vaccine given.
   val currentDate = new DateTime() // For some reason this give the current time.
   def numberOfDoses(): Int = doses.count(d => !d.isEmpty)
-  def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean = {
-    doses(dose) match {
-      case None => return true
-      case Some(dose) => return (dose.isAfter(dob.plusMonths(startMonth)) &&
-                                (dose.isBefore(dob.plusMonths(endMonth))))
-    }
-  }
-}
-
-// Compute the vaccination status when the child is new born (less than two months old)
-class NewBorn(dob: DateTime, doses: Array[DateTime]) {
+  def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
+    withinRange(doses(dose), dob, startMonth, endMonth)
 }
 
 // Vaccinations
@@ -251,7 +266,6 @@ object HelloWorld {
     println("Difference of the value is: " + funSub());
     println("Difference of the value is: " + funSub(y = 6, x = 8));
     println("zipl = " + zipl)
-    println( "Factorial of " + 6 + " is " + factorialDemo.factorial(6) )
     println( "Testing hp20b == hp20B: " + (hp20b == hp20B) )
     println( "Calculator Type HP30B: " + calcType(hp30b))
     println( "Bigger 7.0 ", bigger(7.0))
