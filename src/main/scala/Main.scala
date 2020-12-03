@@ -56,9 +56,14 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
   // Compute the number of doses of the vaccine given.
   val currentDate = new DateTime() // For some reason this give the current time.
   def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
-
- def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
+  def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(doses(dose), dob, startMonth, endMonth)
+  def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean = dose.isAfter(dob.plusMonths(nMonths))
+  def doseIsAfter(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
+    dose match {
+      case None => false
+      case Some(dose) => dose.isAfter(dob.plusMonths(nMonths))
+    }
 }
 
 // Vaccinations
@@ -77,14 +82,16 @@ class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP",
   def immunizationStatus (): VaccineStatus =
   numberOfDoses(doses) match {
     case 0 =>
-      if (isNewBorn(dob)) Complete
+      if (isNewBorn(dob)) UpToDate
       else Incomplete
     case 1 =>
-      if (youngerThan(4, dob)) Complete
-      else {
-        if (recently(4, doses(0))) Complete
-        else Incomplete
-      }
+      // Less than 2 months old or child is less than 4 months of age.
+      if ((youngerThan(4, dob)) || (recently(2, doses(0)))) UpToDate
+      else Incomplete
+    case 2 =>
+      // Dose 1 received at or after 1st birthday and dose 2 received lesss than 12 months ago.
+      if ((doseIsAfter(doses(1), dob, 12)) && (recently(12,doses(1)))) UpToDate
+      else Incomplete
   }
 }
 
