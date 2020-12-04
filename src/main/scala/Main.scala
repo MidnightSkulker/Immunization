@@ -192,7 +192,7 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", 
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Polio (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Older with Younger with VaccineStatus with NewBorn with Recently {
+class Polio (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Younger with VaccineStatus with Recently with Older {
   def immunizationStatus (): VaccineStatus =
     numberOfDoses(doses) match {
       case 0 =>
