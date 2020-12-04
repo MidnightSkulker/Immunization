@@ -191,6 +191,45 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", 
   }
 }
 
+// Vaccination status rules for HIB (Haemophilus Influenza type B)
+class Polio (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Older with Younger with VaccineStatus with NewBorn with Recently {
+  def immunizationStatus (): VaccineStatus =
+    numberOfDoses(doses) match {
+      case 0 =>
+        // If child is less than 2 months old, Polio vaccine is not needed yet.
+        if (youngerThan(dob, 2)) UpToDate
+        // If child is more than 18 years old, Polio vaccine is not needed yet.
+        if (olderThan(dob, 18 * 12)) UpToDate
+        else Incomplete
+      case 1 =>
+        val dose1 = doses(0)
+        // Dose 1 received less than 2 months ago or child is less than 4 months old.
+        if (recently(dose1, 2) || youngerThan(dob, 4)) UpToDate
+        // Dose 1 received more than 2 months ago and child is less than 4 months old.
+        if (youngerThan(dob, 18 * 12)) Incomplete
+        else Complete
+      case 2 =>
+        val dose2 = doses(1)
+        // Dose 2 received less than 12 months ago.
+        if (recently(dose2, 12)) UpToDate
+        // Child is less that 18 months old
+        if (youngerThan(dob, 18)) UpToDate
+        else Incomplete
+      case 3 =>
+        val dose3 = doses(2)
+        // Dose 3 received after 4 years
+        if (doseIsAfter(dose3, dob, 4 * 12)) Complete
+        // Dose 3 received less that 12 months ago
+        if (recently(dose3, 12)) UpToDate
+        // Child is less than kindergarten age (5)
+        if (youngerThan(dob, 5 * 12)) UpToDate
+        // Dose 3 received more than 12 months ago, and child is kindergarten or
+        // higher age, but less than 18 years old.
+        else Incomplete
+      case 4 => Complete
+    }
+}
+
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
