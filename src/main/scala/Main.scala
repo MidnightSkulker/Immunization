@@ -70,7 +70,30 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
       case None => false
       case Some(dose) => dose.isBefore(dob.plusMonths(nMonths))
     }
-
+  // Determine if one dose is after another plus a number of days.
+  def doseAfterDose(dose1: DateTime, dose2: DateTime, days: Int): Boolean =
+    dose2.isAfter(dose1.plusDays(days))
+  def doseAfterDose(dose1: Option[DateTime], dose2: Option[DateTime], days: Int): Boolean =
+    dose1 match {
+      case None => false
+      case Some(dose1) =>
+        dose2 match {
+          case None => false
+          case Some(dose2) => dose2.isAfter(dose1.plusDays(days))
+        }
+    }
+  // Determine if one dose is before another plus a number of days.
+  def doseBeforeDose(dose1: DateTime, dose2: DateTime, days: Int): Boolean =
+    dose2.isBefore(dose1.plusDays(days))
+  def doseBeforeDose(dose1: Option[DateTime], dose2: Option[DateTime], days: Int): Boolean =
+    dose1 match {
+      case None => false
+      case Some(dose1) =>
+        dose2 match {
+          case None => false
+          case Some(dose2) => dose2.isBefore(dose1.plusDays(days))
+        }
+    }
 }
 
 // Vaccinations
@@ -228,6 +251,58 @@ class Polio (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP"
         else Incomplete
       case 4 => Complete
     }
+}
+
+// Vaccination status rules for HIB (Haemophilus Influenza type B)
+class Varicella (
+  dob: DateTime,
+  diseaseHistory: List[String],
+  doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with Younger
+    with Older
+    with VaccineStatus
+    with Recently {
+  def immunizationStatus (): VaccineStatus = {
+    if (diseaseHistory contains "Chicken Pox") Complete
+    else
+      numberOfDoses(doses) match {
+        case 0 =>
+          // No received and child is less than 18 months old.
+          if (youngerThan(dob, 18)) UpToDate
+          else Incomplete
+        case 1 =>
+          val dose1 = doses(0)
+          // First dose is after age 12 months
+          if (doseIsAfter(dose1, dob, 12)) Complete
+          // Received before 12 months of age and child is less than 18 months old.
+          if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 18)) UpToDate
+          // Received before 12 months of age and child is more than 18 months old.
+          if (doseIsBefore(dose1, dob, 12) && olderThan(dob, 18)) Incomplete
+          // Received at or after 13 years of age and less than two months ago.
+          if (olderThan(dob, 13 * 12) && recently(dose1, 2)) UpToDate
+          // Received at or after 13 years of age and less than two months ago.
+          if (olderThan(dob, 13 * 12) && !recently(dose1, 2)) Incomplete
+          else Incomplete
+        case 2 =>
+          val dose1 = doses(0)
+          val dose2 = doses(1)
+          // At least one dose given between 12 months of age and 12 years of age
+          if (doseIsAfter(dose1, dob, 12) && doseIsBefore(dose1, dob, 12 * 12)) Complete
+          if (doseIsAfter(dose2, dob, 12) && doseIsBefore(dose2, dob, 12 * 12)) Complete
+          // First dose given after age 13 and second dose given more than 24
+          // days after the first dose.
+          if (doseIsAfter(dose1, dob, 13 * 12) && doseAfterDose(dose1, dose2, 24)) Complete
+          // Second dose given fewere than 24 days after the first dose and less
+          // than two months ago.
+          if (doseBeforeDose(dose1, dose2, 24) && recently(dose2, 2)) UpToDate
+          // Second dose prior to 12 months of age
+          if (doseIsBefore(dose2, dob, 12) && olderThan(dob, 12)) Incomplete
+          else Incomplete
+        case 3 => Complete
+        case default => Error
+      }
+  }
 }
 
 // ----------------------------------------------------------------------------
