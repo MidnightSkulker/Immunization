@@ -263,7 +263,7 @@ class Varicella (
     with Older
     with VaccineStatus
     with Recently {
-  def immunizationStatus (): VaccineStatus = {
+  def immunizationStatus (): VaccineStatus =
     if (diseaseHistory contains "Chicken Pox") Complete
     else
       numberOfDoses(doses) match {
@@ -302,7 +302,61 @@ class Varicella (
         case 3 => Complete
         case default => Error
       }
-  }
+}
+
+// Vaccination status rules for MMR (Measles, Mumps, and Rubella)
+class MMR (
+  dob: DateTime,
+  doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with VaccineStatus
+    with Younger
+    with Older
+    with Recently {
+  def immunizationStatus (): VaccineStatus =
+    if (youngerThan(dob, 5 * 12))
+      numberOfDoses(doses) match {
+        case 0 =>
+          // Child is under 15 months old
+          if (youngerThan(dob, 15)) UpToDate
+          else Incomplete
+        case 1 =>
+          // **** Need to restrict this to less than K age.
+          val dose1 = doses(0)
+          // Received after 12 months of age.
+          if (doseIsAfter(dose1, dob, 12)) Complete
+          // Received prior to 12 months of age and child is under 15 months of age.
+          if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 15)) UpToDate
+          else Incomplete
+        case default => Complete
+      } // match
+    else
+      numberOfDoses(doses) match {
+        case 0 => Incomplete
+        case 1 =>
+          val dose1 = doses(0)
+          // Received less that two months ago.
+          if (recently(dose1, 2)) UpToDate
+          else Incomplete
+        case 2 =>
+          val dose1 = doses(0)
+          val dose2 = doses(1)
+          // Received after 12 months of age.
+          if (doseIsAfter(dose1, dob, 12) && doseAfterDose(dose1, dose2, 24)) Complete
+          // First dose received prior to 12 months of age and second
+          // received less than two months ago.
+          if (doseIsBefore(dose1, dob, 12) && recently(dose2, 2)) UpToDate
+          // First does received prior to 12 months of age and second
+          // dose received two or more months ago.
+          if (doseIsBefore(dose1, dob, 12) && !recently(dose2, 2)) Incomplete
+          // Second dose given fewer than 24 days after the first
+          // dose and less than two months ago.
+          if (!doseAfterDose(dose1, dose2, 24) && !recently(dose2, 2)) UpToDate
+          // Second dose given fewer than 24 days after first dose and two or more months ago.
+          if (!doseAfterDose(dose1, dose2, 24) && recently(dose2, 2)) Incomplete
+          else Incomplete
+        case 3 => Complete
+      } // match
 }
 
 // ----------------------------------------------------------------------------
