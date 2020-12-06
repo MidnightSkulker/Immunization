@@ -359,6 +359,47 @@ class MMR (
       } // match
 }
 
+// Vaccination status rules for HEPA (Hepatitis A)
+class HEPA (
+  dob: DateTime,
+  doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with VaccineStatus
+    with Younger
+    with Older
+    with Recently {
+  def immunizationStatus (): VaccineStatus =
+    numberOfDoses(doses) match {
+      case 0 =>
+        // Child is under 18 months old
+        if (youngerThan(dob, 18)) UpToDate
+        else Incomplete
+      case 1 =>
+        val dose1 = doses(0)
+        // Received after 12 months of age and less than 12 months ago.
+        if (doseIsAfter(dose1, dob, 12) && recently(dose1, 12)) UpToDate
+        // Received after 12 months of age and more that 12 months ago.
+        if (doseIsAfter(dose1, dob, 12) && !recently(dose1, 12)) Incomplete
+        // Received prior to 12 months of age and child is less that 18 months of age.
+        if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 18)) UpToDate
+        // Recieved prior to 12 months of age and child is 18 months or older.
+        else Incomplete
+      case 2 =>
+        val dose1 = doses(0)
+        val dose2 = doses(1)
+        // Both doses received after 12 months of age.
+        if (doseIsAfter(dose1, dob, 12) && doseIsAfter(dose2, dob, 12)) Complete
+        // Dose 1 received prior to 12 months of age and dose 2
+        // received less than 2 months ago.
+        if (doseIsBefore(dose1, dob, 12) && recently(dose2, 12)) UpToDate
+        // Dose 1 received priot to 12 months of age and dose 2
+        // received 12 months of more ago.
+        else Incomplete
+      case 3 => Complete
+      case 4 => Complete
+  }
+}
+
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
