@@ -366,7 +366,6 @@ class HEPA (
     extends Doses("DTAP", dob, doses)
     with VaccineStatus
     with Younger
-    with Older
     with Recently {
   def immunizationStatus (): VaccineStatus =
     numberOfDoses(doses) match {
@@ -399,6 +398,55 @@ class HEPA (
       case 4 => Complete
   }
 }
+
+// Vaccination status rules for HEPB (Hepatitis B)
+class HEPB (
+  dob: DateTime,
+  doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with VaccineStatus
+    with Younger
+    with Older
+    with Recently {
+  def immunizationStatus (): VaccineStatus =
+    numberOfDoses(doses) match {
+      case 0 =>
+        // Child is under 2 months old.
+        if (youngerThan(dob, 2)) UpToDate
+        // Child is 2 months old or older.
+        else Incomplete
+      case 1 =>
+        val dose1 = doses(0)
+        // Received at or after 11 years old and less than 6 months ago.
+        if (olderThan(dob, 11 * 12) && recently(dose1, 6)) UpToDate
+        // Received at or after 11 years of age and 6 months or more ago.
+        if (olderThan(dob, 11 * 12) && !recently(dose1, 6)) Incomplete
+        // Received before 11 years of age and less than 2 months ago or
+        // child is less than 4 months old.
+        if ((doseIsBefore(dose1, dob, 11 * 12) && recently(dose1, 2)) || youngerThan(dob, 4)) UpToDate
+        // Received before 11 years of age and more than 2 months ago
+        // and child is 4 months old or older.
+        if ((doseIsBefore(dose1, dob, 11 * 12) && !recently(dose1, 2)) && olderThan(dob, 4)) Incomplete
+        else Incomplete
+      case 2 =>
+        val dose1 = doses(0)
+        val dose2 = doses(1)
+        // First dose received at or after 11 years old and second dose
+        // received at least 4 months after first does.
+        if (doseIsBefore(dose1, dob, 11 * 12) && doseAfterDose(dose1, dose2, 4)) Complete
+        // First dose is received at or after 18 years old.
+        if (doseIsAfter(dose1, dob, 18 * 12)) Complete
+        // Second dose received less that 5 months ago
+        if (recently(dose2, 5)) UpToDate
+        // Received 5 months or more ago and child is less than 18 months old.
+        if (!recently(dose2, 5) && youngerThan(dob, 18)) UpToDate
+        // Received 5 months or more ago and child is more than 18 months old.
+        else Incomplete
+      case 3 => Complete
+    }
+}
+
+
 
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
