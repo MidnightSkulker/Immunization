@@ -21,7 +21,8 @@ trait AgeRange {
   def withinRange(d: Option[DateTime], dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
     d match {
       case None => false
-      case Some(d) => (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
+      case Some(d) =>
+        (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
     }
 }
 
@@ -58,13 +59,15 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
   def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(doses(dose), dob, startMonth, endMonth)
-  def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean = dose.isAfter(dob.plusMonths(nMonths))
+  def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
+    dose.isAfter(dob.plusMonths(nMonths))
   def doseIsAfter(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
     dose match {
       case None => false
       case Some(dose) => dose.isAfter(dob.plusMonths(nMonths))
     }
-  def doseIsBefore(dose: DateTime, dob: DateTime, nMonths: Int): Boolean = dose.isBefore(dob.plusMonths(nMonths))
+  def doseIsBefore(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
+    dose.isBefore(dob.plusMonths(nMonths))
   def doseIsBefore(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
     dose match {
       case None => false
@@ -110,7 +113,12 @@ class Vaccine(name: String, max: Int) extends VaccineStatus {
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
-class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Younger with VaccineStatus with Recently with NewBorn {
+class DTAP (dob: DateTime, doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with Younger
+    with VaccineStatus
+    with Recently
+    with NewBorn {
   def immunizationStatus (): VaccineStatus =
   numberOfDoses(doses) match {
     case 0 =>
@@ -164,7 +172,13 @@ class DTAP (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP",
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Older with Younger with VaccineStatus with NewBorn with Recently {
+class HIB (dob: DateTime, doses: Array[Option[DateTime]])
+    extends Doses("DTAP", dob, doses)
+    with Older
+    with Younger
+    with VaccineStatus
+    with NewBorn
+    with Recently {
   def immunizationStatus (): VaccineStatus =
     numberOfDoses(doses) match {
       case 0 =>
@@ -182,7 +196,8 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", 
         if (doseIsAfter(dose1, dob, 15) && youngerThan(dob, 60)) Complete
         if (recently(dose1, 2) && doseIsBefore(dose1, dob, 15)) UpToDate
         // Received before 15 months old, age less than 60 months.
-        if (doseIsBefore(dose1, dob, 15) && olderThan(dob, 18) && youngerThan(dob, 60)) Incomplete
+        if (doseIsBefore(dose1, dob, 15) && olderThan(dob, 18) && youngerThan(dob, 60))
+          Incomplete
         // Not required for 5 years and older.
         if (olderThan(dob, 60)) Complete
         else Incomplete
@@ -195,7 +210,9 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", 
         // First dose after 12 months, age < 18 months.
         if (doseIsAfter(dose1, dob, 12) && youngerThan(dob, 60)) Complete
         // First dose before 12 months, second dose before 15 moontsh, age < 60 months.
-        if (doseIsBefore(dose1, dob, 12) && doseIsBefore(dose2, dob, 15) && youngerThan(dob, 60)) Incomplete
+        if (doseIsBefore(dose1, dob, 12) &&
+            doseIsBefore(dose2, dob, 15) &&
+            youngerThan(dob, 60)) Incomplete
         // Not required for 5 years and older.
         if (olderThan(dob, 60)) Complete
         else Incomplete
@@ -215,7 +232,12 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", 
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Polio (dob: DateTime, doses: Array[Option[DateTime]]) extends Doses("DTAP", dob, doses) with Younger with VaccineStatus with Recently with Older {
+class Polio (dob: DateTime, doses: Array[Option[DateTime]])
+    extends Doses("Polio", dob, doses)
+    with Younger
+    with VaccineStatus
+    with Recently
+    with Older {
   def immunizationStatus (): VaccineStatus =
     numberOfDoses(doses) match {
       case 0 =>
@@ -423,10 +445,13 @@ class HEPB (
         if (olderThan(dob, 11 * 12) && !recently(dose1, 6)) Incomplete
         // Received before 11 years of age and less than 2 months ago or
         // child is less than 4 months old.
-        if ((doseIsBefore(dose1, dob, 11 * 12) && recently(dose1, 2)) || youngerThan(dob, 4)) UpToDate
+        if ((doseIsBefore(dose1, dob, 11 * 12) &&
+             recently(dose1, 2)) || youngerThan(dob, 4)) UpToDate
         // Received before 11 years of age and more than 2 months ago
         // and child is 4 months old or older.
-        if ((doseIsBefore(dose1, dob, 11 * 12) && !recently(dose1, 2)) && olderThan(dob, 4)) Incomplete
+        if ((doseIsBefore(dose1, dob, 11 * 12) &&
+            !recently(dose1, 2)) &&
+            olderThan(dob, 4)) Incomplete
         else Incomplete
       case 2 =>
         val dose1 = doses(0)
@@ -446,12 +471,9 @@ class HEPB (
     }
 }
 
-
-
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
-
     // JSON
     val source = """{ "some": "JSON source", "other": "XML" }"""
     val jsonAst: spray.json.JsValue = source.parseJson // or JsonParser(source)
