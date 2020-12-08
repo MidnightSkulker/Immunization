@@ -6,9 +6,11 @@
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
 import scala.io.Source._
+import scala.io.BufferedSource
 import org.joda.time.base.AbstractInstant
 import org.joda.time.DateTime
 import org.joda.time.Period
+import scala.util.matching.Regex
 
 trait VaccineStatus extends Enumeration () {
   type VaccineStatus = Value
@@ -45,6 +47,8 @@ trait Recently {
       case Some(dose) => DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
     }
 }
+
+// Enumeration -> abstract vaccine -> specific doses.
 
 trait NewBorn {
   // Determine if the child is new born.
@@ -474,12 +478,26 @@ class HEPB (
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
+    // Convert a buffered source of strings to a string
+    def flattenFile(iter: Iterator[String]): String = {
+      var glob: String = ""
+      for (line <- iter) { glob += line }
+      return glob
+    }
+
+    // Convert a buffered source of strings to a string
+    def flattenSource(iter: BufferedSource): String = {
+      var glob: String = ""
+      for (line <- iter) { glob += line }
+      return glob
+    }
+
     // JSON
-    val source = """{ "some": "JSON source", "other": "XML" }"""
+    val source: String = """{ "some": "JSON source", "other": "XML" }"""
     val jsonAst: spray.json.JsValue = source.parseJson // or JsonParser(source)
-    val json = jsonAst.prettyPrint // or .compactPrint
+    val json: String = jsonAst.prettyPrint // or .compactPrint
     val jsonAst2 = List(1, 2, 3).toJson
-    val myObject = jsonAst.convertTo[Map[String,String]]
+    val myObject: Map[String, String] = jsonAst.convertTo[Map[String, String]]
     println("\nsource = " + source)
     println("jsonAst = " + jsonAst)
     println("json = " + json)
@@ -487,15 +505,54 @@ object ImmunizationReport {
     println("myObject = " + myObject)
     println("myObject(\"some\") = " + myObject("some"))
 
-    val filename = "fileopen.scala"
-    println("------ > inputs/ImmunizationData.json\n")
-    var j = 0
-    for (line <- fromFile("inputs/ImmunizationData.json").getLines) {
-      if (j < 12) {
-        println(line)
-        j = j + 1
-      }
-    }
+    val sample: String = """{
+  "dob": "2011-08-08T00:00:00.000Z",
+  "dtap1": "2011-10-27T00:00:00.000Z",
+  "dtap2": "2011-12-13T00:00:00.000Z",
+  "dtap3": "2012-02-11T00:00:00.000Z",
+  "dtap4": "2012-10-09T00:00:00.000Z",
+  "firstName": "Yuvan",
+  "hepA1": "2012-08-09T00:00:00.000Z",
+  "hepA2": "2013-02-06T00:00:00.000Z",
+  "hepB1": "2011-08-08T00:00:00.000Z",
+  "hepB2": "2011-10-27T00:00:00.000Z",
+  "hepB3": "2012-02-11T00:00:00.000Z",
+  "hib1": "2011-10-27T00:00:00.000Z",
+  "hib2": "2011-12-13T00:00:00.000Z",
+  "hib3": "2012-02-11T00:00:00.000Z",
+  "hib4": "2012-10-09T00:00:00.000Z",
+  "lastName": "Huppala",
+  "mmr1": "2012-08-09T00:00:00.000Z",
+  "polio1": "2011-10-27T00:00:00.000Z",
+  "polio2": "2011-12-13T00:00:00.000Z",
+  "polio3": "2012-02-11T00:00:00.000Z",
+  "varicella1": "2012-08-09T00:00:00.000Z"
+}"""
+    val sampleAst: spray.json.JsValue = sample.parseJson
+    val sampleJson: String = sampleAst.prettyPrint
+    val sampleMap: Map[String, String] = sampleAst.convertTo[Map[String, String]]
+    val dtap1: String = sampleMap("dtap1")
+    println("\n------ sampleJson > " + sampleJson)
+    println("\n------ sampleMap > " + sampleMap)
+    println("\n------ dtap1 > " + dtap1)
+
+    val filename: String = "inputs/ImmunizationData.json"
+    val file = fromFile(filename)
+    val glob: String = flattenSource(file)
+    val jsonImmunizations: spray.json.JsValue = glob.parseJson
+    // println("\n------ 2000 characters from > " + filename)
+    // print(glob.take(2000))
+    // println("\n------ parsedJson > " + jsonImmunizations.prettyPrint)
+    // println("\n------ jsonListMap > " + jsonImmunizations.prettyPrint)
+    // val jsonListMap = jsonAst.convertTo[List[Map[String, String]] ]
+    // println("\n------ characters straight from >>>> " + filename)
+    // var j = 0
+    // for (line <- file.getLines) {
+    //   if (j < 12) {
+    //     println(line)
+    //     j += 1
+    //   }
+    // }
   }
 }
 
