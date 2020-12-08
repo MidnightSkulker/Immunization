@@ -57,7 +57,7 @@ trait NewBorn {
 
 
 // Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends Enumeration with NewBorn with AgeRange {
+class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends VaccineStatus with NewBorn with AgeRange {
   // Compute the number of doses of the vaccine given.
   val currentDate = new DateTime() // For some reason this give the current time.
   def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
@@ -101,18 +101,18 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
           case Some(dose2) => dose2.isBefore(dose1.plusDays(days))
         }
     }
+  def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
+    for (j <- 0 to max) { doses(j) = null }
+    return null
+  }
 }
 
 // Vaccinations
 // Example names: DTAP, with maximum of 5 shots (vaccinations).
 //                Polio, with maximum of 5 shots (vaccinations).
-class Vaccine(name: String, max: Int) extends VaccineStatus {
-  def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
-    for (j <- 0 to 10) { doses(j) = null }
-    return null
-  }
-  val doses: Array[DateTime] = fillDoses(doses, max)
-  println ("doses.length: ", doses.length)
+abstract class Vaccine(name: String, dob: DateTime, doses: Array[Option[DateTime]], max: Int)
+    extends Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) {
+  def immunizationStatus (): VaccineStatus = Error
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
