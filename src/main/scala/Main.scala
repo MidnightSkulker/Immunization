@@ -55,8 +55,27 @@ trait NewBorn {
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
-// Get information about doses from
-class ParseJsonDoses (name: String) {
+
+// Get information about doses from Json data
+class ParseJsonDoses (name: String, filename: String) {
+  // Convert a buffered source of strings to a string
+  def flattenSource(iter: BufferedSource): String = {
+    var glob: String = ""
+    for (line <- iter) { glob += line }
+    return glob
+  }
+  // Read the Json information from a file.
+  def readFile(filename: String): BufferedSource = fromFile(filename)
+  // Process the Json information into a string.
+  def stringify(file: BufferedSource): String = flattenSource(file)
+  // Convert json string into JsValue.
+  def jsonify(glob: String): spray.json.JsValue = glob.parseJson
+  // Convert JsValue into a list of maps, one per student.
+  def mapifyJson(json: spray.json.JsValue): List[Map[String, String]] =
+    json.convertTo[List[Map[String, String]]]
+  // Process all the way from the file to mapified Json.
+  def mapify(filename: String): List[Map[String, String]] =
+    stringify(readFile(filename)).parseJson.convertTo[List[Map[String, String]]]
 }
 
 // Common operations on the doses given.
@@ -122,12 +141,12 @@ abstract class Vaccine(name: String, dob: DateTime, doses: Array[Option[DateTime
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
 class DTAP (dob: DateTime, doses: Array[Option[DateTime]])
-    extends Doses("DTAP", dob, doses)
+    extends Vaccine("DTAP", dob, doses, 5)
     with Younger
     with VaccineStatus
     with Recently
     with NewBorn {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
   numberOfDoses(doses) match {
     case 0 =>
       if (isNewBorn(dob)) UpToDate
@@ -483,13 +502,6 @@ class HEPB (
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
     // Convert a buffered source of strings to a string
-    def flattenFile(iter: Iterator[String]): String = {
-      var glob: String = ""
-      for (line <- iter) { glob += line }
-      return glob
-    }
-
-    // Convert a buffered source of strings to a string
     def flattenSource(iter: BufferedSource): String = {
       var glob: String = ""
       for (line <- iter) { glob += line }
@@ -597,11 +609,6 @@ object ImmunizationReport {
     val student1: Map[String, String] = sample2Map(0)
     println("\n------ student1 > " + student1)
 
-
-    val filename: String = "inputs/ImmunizationData.json"
-    val file = fromFile(filename)
-    val glob: String = flattenSource(file)
-    val jsonImmunizations: spray.json.JsValue = glob.parseJson
     // println("\n------ 2000 characters from > " + filename)
     // print(glob.take(2000))
     // println("\n------ parsedJson > " + jsonImmunizations.prettyPrint)
