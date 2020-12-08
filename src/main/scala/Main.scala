@@ -55,6 +55,9 @@ trait NewBorn {
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
+// Get information about doses from
+class ParseJsonDoses (name: String) {
+}
 
 // Common operations on the doses given.
 class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends VaccineStatus with NewBorn with AgeRange {
@@ -101,6 +104,7 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
           case Some(dose2) => dose2.isBefore(dose1.plusDays(days))
         }
     }
+  // Fill up the doses array.
   def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
     for (j <- 0 to max) { doses(j) = null }
     return null
@@ -505,7 +509,7 @@ object ImmunizationReport {
     println("myObject = " + myObject)
     println("myObject(\"some\") = " + myObject("some"))
 
-    val sample: String = """{
+    val sample1: String = """{
   "dob": "2011-08-08T00:00:00.000Z",
   "dtap1": "2011-10-27T00:00:00.000Z",
   "dtap2": "2011-12-13T00:00:00.000Z",
@@ -528,13 +532,71 @@ object ImmunizationReport {
   "polio3": "2012-02-11T00:00:00.000Z",
   "varicella1": "2012-08-09T00:00:00.000Z"
 }"""
-    val sampleAst: spray.json.JsValue = sample.parseJson
-    val sampleJson: String = sampleAst.prettyPrint
-    val sampleMap: Map[String, String] = sampleAst.convertTo[Map[String, String]]
-    val dtap1: String = sampleMap("dtap1")
-    println("\n------ sampleJson > " + sampleJson)
-    println("\n------ sampleMap > " + sampleMap)
+
+    val sample2: String = """[{
+  "dob": "2011-08-08T00:00:00.000Z",
+  "dtap1": "2011-10-27T00:00:00.000Z",
+  "dtap2": "2011-12-13T00:00:00.000Z",
+  "dtap3": "2012-02-11T00:00:00.000Z",
+  "dtap4": "2012-10-09T00:00:00.000Z",
+  "firstName": "Yuvan",
+  "hepA1": "2012-08-09T00:00:00.000Z",
+  "hepA2": "2013-02-06T00:00:00.000Z",
+  "hepB1": "2011-08-08T00:00:00.000Z",
+  "hepB2": "2011-10-27T00:00:00.000Z",
+  "hepB3": "2012-02-11T00:00:00.000Z",
+  "hib1": "2011-10-27T00:00:00.000Z",
+  "hib2": "2011-12-13T00:00:00.000Z",
+  "hib3": "2012-02-11T00:00:00.000Z",
+  "hib4": "2012-10-09T00:00:00.000Z",
+  "lastName": "Huppala",
+  "mmr1": "2012-08-09T00:00:00.000Z",
+  "polio1": "2011-10-27T00:00:00.000Z",
+  "polio2": "2011-12-13T00:00:00.000Z",
+  "polio3": "2012-02-11T00:00:00.000Z",
+  "varicella1": "2012-08-09T00:00:00.000Z"
+},
+{
+  "firstName": "Aaditi",
+  "lastName": "Baddrireddi",
+  "dob": "2010-03-31T00:00:00.000Z",
+  "dtap1": "2010-06-23T00:00:00.000Z",
+  "dtap2": "2010-08-06T00:00:00.000Z",
+  "dtap3": "2010-11-05T00:00:00.000Z",
+  "dtap4": "2011-10-03T00:00:00.000Z",
+  "polio1": "2010-06-23T00:00:00.000Z",
+  "polio2": "2010-08-06T00:00:00.000Z",
+  "polio3": "2010-11-05T00:00:00.000Z",
+  "varicella1": "2011-04-25T00:00:00.000Z",
+  "mmr1": "2011-04-25T00:00:00.000Z",
+  "hepB1": "2010-04-02T00:00:00.000Z",
+  "hepB2": "2010-06-23T00:00:00.000Z",
+  "hepB3": "2010-08-06T00:00:00.000Z",
+  "hepB4": "2010-11-05T00:00:00.000Z",
+  "hepA1": "2011-04-25T00:00:00.000Z",
+  "hepA2": "2011-10-24T00:00:00.000Z",
+  "hib1": "2010-08-06T00:00:00.000Z",
+  "hib2": "2010-11-05T00:00:00.000Z",
+  "hib3": "2011-10-24T00:00:00.000Z",
+  "hib4": "2010-06-23T00:00:00.000Z"
+}]
+"""
+    val sample1Ast: spray.json.JsValue = sample1.parseJson
+    val sample1Json: String = sample1Ast.prettyPrint
+    println("\n------ sample1Json > " + sample1Json)
+    val sample1Map: Map[String, String] = sample1Ast.convertTo[Map[String, String]]
+    println("\n------ sample1Map > " + sample1Map)
+    val dtap1: String = sample1Map("dtap1")
     println("\n------ dtap1 > " + dtap1)
+
+    val sample2Ast: spray.json.JsValue = sample2.parseJson
+    val sample2Json: String = sample2Ast.prettyPrint
+    println("\n------ sample2Json > " + sample2Json)
+    val sample2Map: List[Map[String, String]] = sample2Ast.convertTo[List[Map[String, String]]]
+    println("\n------ sample2Map > " + sample2Map)
+    val student1: Map[String, String] = sample2Map(0)
+    println("\n------ student1 > " + student1)
+
 
     val filename: String = "inputs/ImmunizationData.json"
     val file = fromFile(filename)
