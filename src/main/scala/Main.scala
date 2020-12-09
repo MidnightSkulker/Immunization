@@ -502,17 +502,19 @@ class HEPB (
 }
 
 class Student(jsonMap: Map[String, String]) {
-  def filterShots(jm: Map[String, String], shotRegex: String): List[String] =
+  def filterShotsToList(jm: Map[String, String], shotRegex: String): List[String] =
     jm.filterKeys(_.matches(shotRegex)).values.toList
-  val dob = jsonMap("dob")
+  def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
+    jm.filterKeys(_.matches(shotRegex))
+  val dob: String = jsonMap("dob")
   val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
-  val dtapShots = filterShots(jsonMap, "dtap.*")
-  val polioShots = filterShots(jsonMap, "polio.*")
-  val mmrShots = filterShots(jsonMap, "mmr.*")
-  val varicellaShots = filterShots(jsonMap, "varicella.*")
-  val hibShots = filterShots(jsonMap, "hib.*")
-  val hepaShots = filterShots(jsonMap, "hepa.*")
-  val hepbShots = filterShots(jsonMap, "hepb.*")
+  val dtapShots: Map[String, String] = filterShots(jsonMap, "dtap.*")
+  val polioShots: Map[String, String] = filterShots(jsonMap, "polio.*")
+  val mmrShots: Map[String, String] = filterShots(jsonMap, "mmr.*")
+  val varicellaShots: Map[String, String] = filterShots(jsonMap, "varicella.*")
+  val hibShots: Map[String, String] = filterShots(jsonMap, "hib.*")
+  val hepaShots: Map[String, String] = filterShots(jsonMap, "hepa.*")
+  val hepbShots: Map[String, String] = filterShots(jsonMap, "hepb.*")
 }
 
 // ----------------------------------------------------------------------------
