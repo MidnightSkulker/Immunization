@@ -57,7 +57,7 @@ trait NewBorn {
 
 
 // Get information about doses from Json data
-class ParseJsonDoses (name: String, filename: String) {
+class ParseJsonDoses (filename: String) {
   // Convert a buffered source of strings to a string
   def flattenSource(iter: BufferedSource): String = {
     var glob: String = ""
@@ -133,8 +133,11 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
 // Vaccinations
 // Example names: DTAP, with maximum of 5 shots (vaccinations).
 //                Polio, with maximum of 5 shots (vaccinations).
-abstract class Vaccine(name: String, dob: DateTime, doses: Array[Option[DateTime]], max: Int)
-    extends Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) {
+abstract class Vaccine(
+  name: String,
+  dob: DateTime,
+  doses: Array[Option[DateTime]],
+  max: Int) extends Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) {
   def immunizationStatus (): VaccineStatus = Error
 }
 
@@ -498,52 +501,30 @@ class HEPB (
     }
 }
 
+class Student(jsonMap: Map[String, String]) {
+  def filterShots(jm: Map[String, String], shotRegex: String): List[String] =
+    jm.filterKeys(_.matches(shotRegex)).values.toList
+  val dob = jsonMap("dob")
+  val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
+  val dtapShots = filterShots(jsonMap, "dtap.*")
+  val polioShots = filterShots(jsonMap, "polio.*")
+  val mmrShots = filterShots(jsonMap, "mmr.*")
+  val varicellaShots = filterShots(jsonMap, "varicella.*")
+  val hibShots = filterShots(jsonMap, "hib.*")
+  val hepaShots = filterShots(jsonMap, "hepa.*")
+  val hepbShots = filterShots(jsonMap, "hepb.*")
+}
+
 // ----------------------------------------------------------------------------
 object ImmunizationReport {
   def main(args: Array[String]): Unit = {
-    // Convert a buffered source of strings to a string
-    def flattenSource(iter: BufferedSource): String = {
-      var glob: String = ""
-      for (line <- iter) { glob += line }
-      return glob
-    }
 
-    // JSON
-    val source: String = """{ "some": "JSON source", "other": "XML" }"""
-    val jsonAst: spray.json.JsValue = source.parseJson // or JsonParser(source)
-    val json: String = jsonAst.prettyPrint // or .compactPrint
-    val jsonAst2 = List(1, 2, 3).toJson
-    val myObject: Map[String, String] = jsonAst.convertTo[Map[String, String]]
-    println("\nsource = " + source)
-    println("jsonAst = " + jsonAst)
-    println("json = " + json)
-    println("jsonAst2 = " + jsonAst2)
-    println("myObject = " + myObject)
-    println("myObject(\"some\") = " + myObject("some"))
-
-    val sample1: String = """{
-  "dob": "2011-08-08T00:00:00.000Z",
-  "dtap1": "2011-10-27T00:00:00.000Z",
-  "dtap2": "2011-12-13T00:00:00.000Z",
-  "dtap3": "2012-02-11T00:00:00.000Z",
-  "dtap4": "2012-10-09T00:00:00.000Z",
-  "firstName": "Yuvan",
-  "hepA1": "2012-08-09T00:00:00.000Z",
-  "hepA2": "2013-02-06T00:00:00.000Z",
-  "hepB1": "2011-08-08T00:00:00.000Z",
-  "hepB2": "2011-10-27T00:00:00.000Z",
-  "hepB3": "2012-02-11T00:00:00.000Z",
-  "hib1": "2011-10-27T00:00:00.000Z",
-  "hib2": "2011-12-13T00:00:00.000Z",
-  "hib3": "2012-02-11T00:00:00.000Z",
-  "hib4": "2012-10-09T00:00:00.000Z",
-  "lastName": "Huppala",
-  "mmr1": "2012-08-09T00:00:00.000Z",
-  "polio1": "2011-10-27T00:00:00.000Z",
-  "polio2": "2011-12-13T00:00:00.000Z",
-  "polio3": "2012-02-11T00:00:00.000Z",
-  "varicella1": "2012-08-09T00:00:00.000Z"
-}"""
+    // Object to parse the JSON information.
+    val parser = new ParseJsonDoses ("inputs/ImmunizationData.json")
+    val doseMaps: List[Map[String, String]] = parser.mapify("inputs/ImmunizationData.json")
+    val x1 = doseMaps(0)("dtap1")
+    val x2 = doseMaps(1)("dtap2")
+    println("======= > x1, x2 = ", x1, x2)
 
     val sample2: String = """[{
   "dob": "2011-08-08T00:00:00.000Z",
@@ -593,13 +574,6 @@ object ImmunizationReport {
   "hib4": "2010-06-23T00:00:00.000Z"
 }]
 """
-    val sample1Ast: spray.json.JsValue = sample1.parseJson
-    val sample1Json: String = sample1Ast.prettyPrint
-    println("\n------ sample1Json > " + sample1Json)
-    val sample1Map: Map[String, String] = sample1Ast.convertTo[Map[String, String]]
-    println("\n------ sample1Map > " + sample1Map)
-    val dtap1: String = sample1Map("dtap1")
-    println("\n------ dtap1 > " + dtap1)
 
     val sample2Ast: spray.json.JsValue = sample2.parseJson
     val sample2Json: String = sample2Ast.prettyPrint
