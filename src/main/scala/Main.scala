@@ -20,12 +20,6 @@ trait VaccineStatus extends Enumeration () {
 trait AgeRange {
   def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
     (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
-  def withinRange(d: Option[DateTime], dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
-    d match {
-      case None => false
-      case Some(d) =>
-        (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
-    }
 }
 
 trait Older {
@@ -76,15 +70,21 @@ class ParseJsonDoses (filename: String) {
   // Process all the way from the file to mapified Json.
   def mapify(filename: String): List[Map[String, String]] =
     stringify(readFile(filename)).parseJson.convertTo[List[Map[String, String]]]
+  // ***** Need to convert value to DateTime
 }
 
 // Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends VaccineStatus with NewBorn with AgeRange {
-  // Compute the number of doses of the vaccine given.
-  val currentDate = new DateTime() // For some reason this give the current time.
-  def numberOfDoses(doses: Array[Option[DateTime]]): Int = doses.count(d => !d.isEmpty)
+class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
+    extends VaccineStatus with AgeRange {
+  // Get the nth dose, using ordinal numbers.
+  def nth(n: Int) = doses(name.toLowerCase() + n)
+  def firstDose = nth(1)
+  def secondDose = nth(2)
+  def thirdDose = nth(3)
+  def fourthDose =  nth(4)
+  def fifthDose = nth(5)
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
-    withinRange(doses(dose), dob, startMonth, endMonth)
+    withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
     dose.isAfter(dob.plusMonths(nMonths))
   def doseIsAfter(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
@@ -136,63 +136,58 @@ class Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) extends
 abstract class Vaccine(
   name: String,
   dob: DateTime,
-  doses: Array[Option[DateTime]],
-  max: Int) extends Doses(name: String, dob: DateTime, doses: Array[Option[DateTime]]) {
+  doses: Map[String, DateTime],
+  max: Int) extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime]) {
   def immunizationStatus (): VaccineStatus = Error
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
-class DTAP (dob: DateTime, doses: Array[Option[DateTime]])
+class DTAP (dob: DateTime, doses: Map[String, DateTime])
     extends Vaccine("DTAP", dob, doses, 5)
     with Younger
     with VaccineStatus
     with Recently
     with NewBorn {
   override def immunizationStatus (): VaccineStatus =
-  numberOfDoses(doses) match {
+  doses.size match {
     case 0 =>
       if (isNewBorn(dob)) UpToDate
       else Incomplete
     case 1 =>
-      val dose1 = doses(0)
       // Less than 2 months old or child is less than 4 months of age.
-      if ((youngerThan(dob, 4)) || (recently(dose1, 2))) UpToDate
+      if ((youngerThan(dob, 4)) || (recently(firstDose, 2))) UpToDate
       else Incomplete
     case 2 =>
-      val dose2 = doses(1)
       // Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago.
-      if ((doseIsAfter(dose2, dob, 12)) && (recently(dose2, 12))) UpToDate
+      if ((doseIsAfter(secondDose, dob, 12)) && (recently(secondDose, 12))) UpToDate
       // Dose 1 received at or after 1st birthday and dose 2 received more than 12 months ago.
-      if ((doseIsAfter(dose2, dob, 12)) && (!recently(dose2, 12))) Incomplete
+      if ((doseIsAfter(secondDose, dob, 12)) && (!recently(secondDose, 12))) Incomplete
       // Child is 7 years or older and dose 2 received less than 12 months ago.
-      if (((DateTime.now).isAfter(dob.plusMonths(84))) && (recently(dose2, 12))) UpToDate
+      if (((DateTime.now).isAfter(dob.plusMonths(84))) && (recently(secondDose, 12))) UpToDate
       // Child is 7 years or older and dose 2 received more than 12 months ago.
-      if ((DateTime.now).isAfter(dob.plusMonths(84)) && (!recently(dose2, 12))) Incomplete
+      if ((DateTime.now).isAfter(dob.plusMonths(84)) && (!recently(secondDose, 12))) Incomplete
       // Dose 2 received less than 2 months ago or child is less than 6 months old.
-      if ((recently(dose2, 2)) || (youngerThan(dob, 6))) UpToDate
+      if ((recently(secondDose, 2)) || (youngerThan(dob, 6))) UpToDate
       // Dose 2 received more than 2 months ago and child is less than 6 months old.
-      if ((!recently(dose2, 2)) && (youngerThan(dob, 6))) UpToDate
+      if ((!recently(secondDose, 2)) && (youngerThan(dob, 6))) UpToDate
       else Incomplete
     case 3 =>
-      val dose1 = doses(0)
-      val dose3 = doses(2)
       // Dose received after 7th birthday.
-      if (doseIsAfter(dose3, dob, 84)) Complete
+      if (doseIsAfter(thirdDose, dob, 84)) Complete
       // Dose 3 received less than 12 months ago.
-      if (recently(dose3, 12)) UpToDate
+      if (recently(thirdDose, 12)) UpToDate
       // Dose 1 received at or after 1st birthday and child is less than 4 years old.
-      if (doseIsAfter(dose1, dob, 12) && youngerThan(dob, 48)) UpToDate
+      if (doseIsAfter(firstDose, dob, 12) && youngerThan(dob, 48)) UpToDate
       // Child is less than 18 months old.
       if (youngerThan(dob, 18)) UpToDate
       // Dose 3 recceived 12 months or more ago and child is 18 months old or older.
       else Incomplete
     case 4 =>
-      val dose4 = doses(3)
       // Dose 4 was given at or after 4th Birthday
-      if (doseIsAfter(dose4, dob, 48)) Complete
+      if (doseIsAfter(fourthDose, dob, 48)) Complete
       // Dose 4 was before 4th Birthday and child is less than Kindergarten age (5).
-      if (doseIsBefore(dose4, dob, 48) && youngerThan(dob, 60)) UpToDate
+      if (doseIsBefore(fourthDose, dob, 48) && youngerThan(dob, 60)) UpToDate
       // Dose 4 was received before 4th birthday and child is kindergarten of higher grade.
       else Incomplete
     case 5 =>
@@ -202,7 +197,7 @@ class DTAP (dob: DateTime, doses: Array[Option[DateTime]])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class HIB (dob: DateTime, doses: Array[Option[DateTime]])
+class HIB (dob: DateTime, doses: Map[String, DateTime])
     extends Doses("DTAP", dob, doses)
     with Older
     with Younger
@@ -210,7 +205,7 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]])
     with NewBorn
     with Recently {
   def immunizationStatus (): VaccineStatus =
-    numberOfDoses(doses) match {
+    doses.size match {
       case 0 =>
         // If child is less than 2 months old, HIB is not needed yet.
         if (isNewBorn(dob)) UpToDate
@@ -218,41 +213,37 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]])
         if (olderThan(dob, 48)) Complete
         else Incomplete
       case 1 =>
-        val dose1 = doses(0)
         // Received less than 2 months ago or child is less than four months old.
-        if (recently(dose1, 2) && youngerThan(dob, 4)) UpToDate
-        // Received after 15 months old, age less than 18 months.
+        if (recently(firstDose, 2) && youngerThan(dob, 4)) UpToDate
         // Received after 15 months old, age less than 60 months.
-        if (doseIsAfter(dose1, dob, 15) && youngerThan(dob, 60)) Complete
-        if (recently(dose1, 2) && doseIsBefore(dose1, dob, 15)) UpToDate
+        if (doseIsAfter(firstDose, dob, 15) && youngerThan(dob, 60)) Complete
+        // Received before 15 months old, first dose less than 2 months ago.
+        if (recently(firstDose, 2) && doseIsBefore(firstDose, dob, 15)) UpToDate
         // Received before 15 months old, age less than 60 months.
-        if (doseIsBefore(dose1, dob, 15) && olderThan(dob, 18) && youngerThan(dob, 60))
+        if (doseIsBefore(firstDose, dob, 15) && olderThan(dob, 18) && youngerThan(dob, 60))
           Incomplete
         // Not required for 5 years and older.
         if (olderThan(dob, 60)) Complete
         else Incomplete
       case 2 =>
-        val dose1 = doses(0)
-        val dose2 = doses(1)
         if (youngerThan(dob, 12)) UpToDate
         // Received second dose after 15 months, age < 18 months.
-        if (doseIsAfter(dose2, dob, 15) && youngerThan(dob, 60)) Complete
+        if (doseIsAfter(secondDose, dob, 15) && youngerThan(dob, 60)) Complete
         // First dose after 12 months, age < 18 months.
-        if (doseIsAfter(dose1, dob, 12) && youngerThan(dob, 60)) Complete
+        if (doseIsAfter(firstDose, dob, 12) && youngerThan(dob, 60)) Complete
         // First dose before 12 months, second dose before 15 moontsh, age < 60 months.
-        if (doseIsBefore(dose1, dob, 12) &&
-            doseIsBefore(dose2, dob, 15) &&
+        if (doseIsBefore(firstDose, dob, 12) &&
+            doseIsBefore(secondDose, dob, 15) &&
             youngerThan(dob, 60)) Incomplete
         // Not required for 5 years and older.
         if (olderThan(dob, 60)) Complete
         else Incomplete
       case 3 =>
-        val dose3 = doses(2)
         if (youngerThan(dob, 12)) UpToDate
-        if (youngerThan(dob, 18) && doseIsAfter(dose3, dob, 12)) Complete
-        if (youngerThan(dob, 18) && doseIsBefore(dose3, dob, 12)) UpToDate
-        if (youngerThan(dob, 60) && doseIsAfter(dose3, dob, 12)) Complete
-        if (youngerThan(dob, 60) && doseIsBefore(dose3, dob, 12)) UpToDate
+        if (youngerThan(dob, 18) && doseIsAfter(thirdDose, dob, 12)) Complete
+        if (youngerThan(dob, 18) && doseIsBefore(thirdDose, dob, 12)) UpToDate
+        if (youngerThan(dob, 60) && doseIsAfter(thirdDose, dob, 12)) Complete
+        if (youngerThan(dob, 60) && doseIsBefore(thirdDose, dob, 12)) UpToDate
         if (olderThan(dob,60)) Complete
         else Incomplete
       case 4 => Complete
@@ -262,14 +253,14 @@ class HIB (dob: DateTime, doses: Array[Option[DateTime]])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Polio (dob: DateTime, doses: Array[Option[DateTime]])
+class Polio (dob: DateTime, doses: Map[String, DateTime])
     extends Doses("Polio", dob, doses)
     with Younger
     with VaccineStatus
     with Recently
     with Older {
   def immunizationStatus (): VaccineStatus =
-    numberOfDoses(doses) match {
+    doses.size match {
       case 0 =>
         // If child is less than 2 months old, Polio vaccine is not needed yet.
         if (youngerThan(dob, 2)) UpToDate
@@ -277,25 +268,22 @@ class Polio (dob: DateTime, doses: Array[Option[DateTime]])
         if (olderThan(dob, 18 * 12)) UpToDate
         else Incomplete
       case 1 =>
-        val dose1 = doses(0)
         // Dose 1 received less than 2 months ago or child is less than 4 months old.
-        if (recently(dose1, 2) || youngerThan(dob, 4)) UpToDate
+        if (recently(firstDose, 2) || youngerThan(dob, 4)) UpToDate
         // Dose 1 received more than 2 months ago and child is less than 4 months old.
         if (youngerThan(dob, 18 * 12)) Incomplete
         else Complete
       case 2 =>
-        val dose2 = doses(1)
         // Dose 2 received less than 12 months ago.
-        if (recently(dose2, 12)) UpToDate
+        if (recently(secondDose, 12)) UpToDate
         // Child is less that 18 months old
         if (youngerThan(dob, 18)) UpToDate
         else Incomplete
       case 3 =>
-        val dose3 = doses(2)
         // Dose 3 received after 4 years
-        if (doseIsAfter(dose3, dob, 4 * 12)) Complete
+        if (doseIsAfter(thirdDose, dob, 4 * 12)) Complete
         // Dose 3 received less that 12 months ago
-        if (recently(dose3, 12)) UpToDate
+        if (recently(thirdDose, 12)) UpToDate
         // Child is less than kindergarten age (5)
         if (youngerThan(dob, 5 * 12)) UpToDate
         // Dose 3 received more than 12 months ago, and child is kindergarten or
@@ -306,10 +294,7 @@ class Polio (dob: DateTime, doses: Array[Option[DateTime]])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Varicella (
-  dob: DateTime,
-  diseaseHistory: List[String],
-  doses: Array[Option[DateTime]])
+class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String, DateTime])
     extends Doses("DTAP", dob, doses)
     with Younger
     with Older
@@ -318,38 +303,35 @@ class Varicella (
   def immunizationStatus (): VaccineStatus =
     if (diseaseHistory contains "Chicken Pox") Complete
     else
-      numberOfDoses(doses) match {
+      doses.size match {
         case 0 =>
           // No received and child is less than 18 months old.
           if (youngerThan(dob, 18)) UpToDate
           else Incomplete
         case 1 =>
-          val dose1 = doses(0)
           // First dose is after age 12 months
-          if (doseIsAfter(dose1, dob, 12)) Complete
+          if (doseIsAfter(firstDose, dob, 12)) Complete
           // Received before 12 months of age and child is less than 18 months old.
-          if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 18)) UpToDate
+          if (doseIsBefore(firstDose, dob, 12) && youngerThan(dob, 18)) UpToDate
           // Received before 12 months of age and child is more than 18 months old.
-          if (doseIsBefore(dose1, dob, 12) && olderThan(dob, 18)) Incomplete
+          if (doseIsBefore(firstDose, dob, 12) && olderThan(dob, 18)) Incomplete
           // Received at or after 13 years of age and less than two months ago.
-          if (olderThan(dob, 13 * 12) && recently(dose1, 2)) UpToDate
+          if (olderThan(dob, 13 * 12) && recently(firstDose, 2)) UpToDate
           // Received at or after 13 years of age and less than two months ago.
-          if (olderThan(dob, 13 * 12) && !recently(dose1, 2)) Incomplete
+          if (olderThan(dob, 13 * 12) && !recently(firstDose, 2)) Incomplete
           else Incomplete
         case 2 =>
-          val dose1 = doses(0)
-          val dose2 = doses(1)
           // At least one dose given between 12 months of age and 12 years of age
-          if (doseIsAfter(dose1, dob, 12) && doseIsBefore(dose1, dob, 12 * 12)) Complete
-          if (doseIsAfter(dose2, dob, 12) && doseIsBefore(dose2, dob, 12 * 12)) Complete
+          if (doseIsAfter(firstDose, dob, 12) && doseIsBefore(firstDose, dob, 12 * 12)) Complete
+          if (doseIsAfter(secondDose, dob, 12) && doseIsBefore(secondDose, dob, 12 * 12)) Complete
           // First dose given after age 13 and second dose given more than 24
           // days after the first dose.
-          if (doseIsAfter(dose1, dob, 13 * 12) && doseAfterDose(dose1, dose2, 24)) Complete
+          if (doseIsAfter(firstDose, dob, 13 * 12) && doseAfterDose(firstDose, secondDose, 24)) Complete
           // Second dose given fewere than 24 days after the first dose and less
           // than two months ago.
-          if (doseBeforeDose(dose1, dose2, 24) && recently(dose2, 2)) UpToDate
+          if (doseBeforeDose(firstDose, secondDose, 24) && recently(secondDose, 2)) UpToDate
           // Second dose prior to 12 months of age
-          if (doseIsBefore(dose2, dob, 12) && olderThan(dob, 12)) Incomplete
+          if (doseIsBefore(secondDose, dob, 12) && olderThan(dob, 12)) Incomplete
           else Incomplete
         case 3 => Complete
         case default => Error
@@ -357,9 +339,7 @@ class Varicella (
 }
 
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
-class MMR (
-  dob: DateTime,
-  doses: Array[Option[DateTime]])
+class MMR (dob: DateTime, doses: Map[String, DateTime])
     extends Doses("DTAP", dob, doses)
     with VaccineStatus
     with Younger
@@ -367,82 +347,73 @@ class MMR (
     with Recently {
   def immunizationStatus (): VaccineStatus =
     if (youngerThan(dob, 5 * 12))
-      numberOfDoses(doses) match {
+      doses.size match {
         case 0 =>
           // Child is under 15 months old
           if (youngerThan(dob, 15)) UpToDate
           else Incomplete
         case 1 =>
           // **** Need to restrict this to less than K age.
-          val dose1 = doses(0)
           // Received after 12 months of age.
-          if (doseIsAfter(dose1, dob, 12)) Complete
+          if (doseIsAfter(firstDose, dob, 12)) Complete
           // Received prior to 12 months of age and child is under 15 months of age.
-          if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 15)) UpToDate
+          if (doseIsBefore(firstDose, dob, 12) && youngerThan(dob, 15)) UpToDate
           else Incomplete
         case default => Complete
       } // match
     else
-      numberOfDoses(doses) match {
+      doses.size match {
         case 0 => Incomplete
         case 1 =>
-          val dose1 = doses(0)
           // Received less that two months ago.
-          if (recently(dose1, 2)) UpToDate
+          if (recently(firstDose, 2)) UpToDate
           else Incomplete
         case 2 =>
-          val dose1 = doses(0)
-          val dose2 = doses(1)
           // Received after 12 months of age.
-          if (doseIsAfter(dose1, dob, 12) && doseAfterDose(dose1, dose2, 24)) Complete
+          if (doseIsAfter(firstDose, dob, 12) && doseAfterDose(firstDose, secondDose, 24)) Complete
           // First dose received prior to 12 months of age and second
           // received less than two months ago.
-          if (doseIsBefore(dose1, dob, 12) && recently(dose2, 2)) UpToDate
+          if (doseIsBefore(firstDose, dob, 12) && recently(secondDose, 2)) UpToDate
           // First does received prior to 12 months of age and second
           // dose received two or more months ago.
-          if (doseIsBefore(dose1, dob, 12) && !recently(dose2, 2)) Incomplete
+          if (doseIsBefore(firstDose, dob, 12) && !recently(secondDose, 2)) Incomplete
           // Second dose given fewer than 24 days after the first
           // dose and less than two months ago.
-          if (!doseAfterDose(dose1, dose2, 24) && !recently(dose2, 2)) UpToDate
+          if (!doseAfterDose(firstDose, secondDose, 24) && !recently(secondDose, 2)) UpToDate
           // Second dose given fewer than 24 days after first dose and two or more months ago.
-          if (!doseAfterDose(dose1, dose2, 24) && recently(dose2, 2)) Incomplete
+          if (!doseAfterDose(firstDose, secondDose, 24) && recently(secondDose, 2)) Incomplete
           else Incomplete
         case 3 => Complete
       } // match
 }
 
 // Vaccination status rules for HEPA (Hepatitis A)
-class HEPA (
-  dob: DateTime,
-  doses: Array[Option[DateTime]])
+class HEPA (dob: DateTime, doses: Map[String, DateTime])
     extends Doses("DTAP", dob, doses)
     with VaccineStatus
     with Younger
     with Recently {
   def immunizationStatus (): VaccineStatus =
-    numberOfDoses(doses) match {
+    doses.size match {
       case 0 =>
         // Child is under 18 months old
         if (youngerThan(dob, 18)) UpToDate
         else Incomplete
       case 1 =>
-        val dose1 = doses(0)
         // Received after 12 months of age and less than 12 months ago.
-        if (doseIsAfter(dose1, dob, 12) && recently(dose1, 12)) UpToDate
+        if (doseIsAfter(firstDose, dob, 12) && recently(firstDose, 12)) UpToDate
         // Received after 12 months of age and more that 12 months ago.
-        if (doseIsAfter(dose1, dob, 12) && !recently(dose1, 12)) Incomplete
+        if (doseIsAfter(firstDose, dob, 12) && !recently(firstDose, 12)) Incomplete
         // Received prior to 12 months of age and child is less that 18 months of age.
-        if (doseIsBefore(dose1, dob, 12) && youngerThan(dob, 18)) UpToDate
+        if (doseIsBefore(firstDose, dob, 12) && youngerThan(dob, 18)) UpToDate
         // Recieved prior to 12 months of age and child is 18 months or older.
         else Incomplete
       case 2 =>
-        val dose1 = doses(0)
-        val dose2 = doses(1)
         // Both doses received after 12 months of age.
-        if (doseIsAfter(dose1, dob, 12) && doseIsAfter(dose2, dob, 12)) Complete
+        if (doseIsAfter(firstDose, dob, 12) && doseIsAfter(secondDose, dob, 12)) Complete
         // Dose 1 received prior to 12 months of age and dose 2
         // received less than 2 months ago.
-        if (doseIsBefore(dose1, dob, 12) && recently(dose2, 12)) UpToDate
+        if (doseIsBefore(firstDose, dob, 12) && recently(secondDose, 12)) UpToDate
         // Dose 1 received priot to 12 months of age and dose 2
         // received 12 months of more ago.
         else Incomplete
@@ -452,49 +423,44 @@ class HEPA (
 }
 
 // Vaccination status rules for HEPB (Hepatitis B)
-class HEPB (
-  dob: DateTime,
-  doses: Array[Option[DateTime]])
+class HEPB (dob: DateTime, doses: Map[String, DateTime])
     extends Doses("DTAP", dob, doses)
     with VaccineStatus
     with Younger
     with Older
     with Recently {
   def immunizationStatus (): VaccineStatus =
-    numberOfDoses(doses) match {
+    doses.size match {
       case 0 =>
         // Child is under 2 months old.
         if (youngerThan(dob, 2)) UpToDate
         // Child is 2 months old or older.
         else Incomplete
       case 1 =>
-        val dose1 = doses(0)
         // Received at or after 11 years old and less than 6 months ago.
-        if (olderThan(dob, 11 * 12) && recently(dose1, 6)) UpToDate
+        if (olderThan(dob, 11 * 12) && recently(firstDose, 6)) UpToDate
         // Received at or after 11 years of age and 6 months or more ago.
-        if (olderThan(dob, 11 * 12) && !recently(dose1, 6)) Incomplete
+        if (olderThan(dob, 11 * 12) && !recently(firstDose, 6)) Incomplete
         // Received before 11 years of age and less than 2 months ago or
         // child is less than 4 months old.
-        if ((doseIsBefore(dose1, dob, 11 * 12) &&
-             recently(dose1, 2)) || youngerThan(dob, 4)) UpToDate
+        if ((doseIsBefore(firstDose, dob, 11 * 12) &&
+             recently(firstDose, 2)) || youngerThan(dob, 4)) UpToDate
         // Received before 11 years of age and more than 2 months ago
         // and child is 4 months old or older.
-        if ((doseIsBefore(dose1, dob, 11 * 12) &&
-            !recently(dose1, 2)) &&
+        if ((doseIsBefore(firstDose, dob, 11 * 12) &&
+            !recently(firstDose, 2)) &&
             olderThan(dob, 4)) Incomplete
         else Incomplete
       case 2 =>
-        val dose1 = doses(0)
-        val dose2 = doses(1)
         // First dose received at or after 11 years old and second dose
         // received at least 4 months after first does.
-        if (doseIsBefore(dose1, dob, 11 * 12) && doseAfterDose(dose1, dose2, 4)) Complete
+        if (doseIsBefore(firstDose, dob, 11 * 12) && doseAfterDose(firstDose, secondDose, 4)) Complete
         // First dose is received at or after 18 years old.
-        if (doseIsAfter(dose1, dob, 18 * 12)) Complete
+        if (doseIsAfter(firstDose, dob, 18 * 12)) Complete
         // Second dose received less that 5 months ago
-        if (recently(dose2, 5)) UpToDate
+        if (recently(secondDose, 5)) UpToDate
         // Received 5 months or more ago and child is less than 18 months old.
-        if (!recently(dose2, 5) && youngerThan(dob, 18)) UpToDate
+        if (!recently(secondDose, 5) && youngerThan(dob, 18)) UpToDate
         // Received 5 months or more ago and child is more than 18 months old.
         else Incomplete
       case 3 => Complete
@@ -506,7 +472,7 @@ class Student(jsonMap: Map[String, String]) {
     jm.filterKeys(_.matches(shotRegex)).values.toList
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
-  val dob: String = jsonMap("dob")
+  val dob: DateTime = new DateTime(jsonMap("dob"))
   val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
   val dtapShots: Map[String, String] = filterShots(jsonMap, "dtap.*")
   val polioShots: Map[String, String] = filterShots(jsonMap, "polio.*")
@@ -515,6 +481,12 @@ class Student(jsonMap: Map[String, String]) {
   val hibShots: Map[String, String] = filterShots(jsonMap, "hib.*")
   val hepaShots: Map[String, String] = filterShots(jsonMap, "hepa.*")
   val hepbShots: Map[String, String] = filterShots(jsonMap, "hepb.*")
+}
+
+class ProcessStudent(jsonMap: Map[String, String]) extends Student(jsonMap) {
+  // Process the doses of HepB.
+  // val dtap = new DTAP(dob, filterShotsToList(jsonMap, "dtap.*"))
+  // val dtapReport = dtap.immunizationStatus ()
 }
 
 // ----------------------------------------------------------------------------
@@ -559,6 +531,7 @@ object ImmunizationReport {
   "dtap2": "2010-08-06T00:00:00.000Z",
   "dtap3": "2010-11-05T00:00:00.000Z",
   "dtap4": "2011-10-03T00:00:00.000Z",
+  "dtap5": "",
   "polio1": "2010-06-23T00:00:00.000Z",
   "polio2": "2010-08-06T00:00:00.000Z",
   "polio3": "2010-11-05T00:00:00.000Z",
@@ -577,6 +550,7 @@ object ImmunizationReport {
 }]
 """
 
+    // The empty "dtap5" for Aaditi does not show up in the map, so no need for null values.
     val sample2Ast: spray.json.JsValue = sample2.parseJson
     val sample2Json: String = sample2Ast.prettyPrint
     println("\n------ sample2Json > " + sample2Json)
