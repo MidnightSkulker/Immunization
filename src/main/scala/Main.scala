@@ -475,12 +475,13 @@ class Student(jsonMap: Map[String, String]) {
   val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
 
   // Date parser to keep us from throwing exceptions.
-  def validateDate(date: String) = try {
-    val df = new SimpleDateFormat("yyyy-MM-dd")
-    df.setLenient(false)
-    df.parse(date)
-    true
-  } catch { case e: Any => false }
+  def validateDate(date: String) =
+    try {
+      val df = new SimpleDateFormat("yyyy-MM-dd")
+      df.setLenient(false)
+      df.parse(date)
+      true
+    } catch { case e: Any => false }
 
   // Make sure all date strings in a map are valid.
   def validateDates(dm: Map[String, String]): Boolean =
