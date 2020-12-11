@@ -9,6 +9,7 @@ import scala.io.Source._
 import scala.io.BufferedSource
 import org.joda.time.base.AbstractInstant
 import org.joda.time.DateTime
+import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
 
@@ -468,19 +469,48 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
 }
 
 class Student(jsonMap: Map[String, String]) {
-  def filterShotsToList(jm: Map[String, String], shotRegex: String): List[String] =
-    jm.filterKeys(_.matches(shotRegex)).values.toList
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
   val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
-  val dtapShots: Map[String, String] = filterShots(jsonMap, "dtap.*")
-  val polioShots: Map[String, String] = filterShots(jsonMap, "polio.*")
-  val mmrShots: Map[String, String] = filterShots(jsonMap, "mmr.*")
-  val varicellaShots: Map[String, String] = filterShots(jsonMap, "varicella.*")
-  val hibShots: Map[String, String] = filterShots(jsonMap, "hib.*")
-  val hepaShots: Map[String, String] = filterShots(jsonMap, "hepa.*")
-  val hepbShots: Map[String, String] = filterShots(jsonMap, "hepb.*")
+
+  // Date parser to keep us from throwing exceptions.
+  def validateDate(date: String) = try {
+    val df = new SimpleDateFormat("yyyy-MM-dd")
+    df.setLenient(false)
+    df.parse(date)
+    true
+  } catch { case e: Any => false }
+
+  // Make sure all date strings in a map are valid.
+  def validateDates(dm: Map[String, String]): Boolean =
+    dm.map(kv => validateDate(kv._2)).forall(identity)
+
+  // Convert a date string to a DateTime.
+  // We will be calling this only with validate date time string, so no need
+  // to worry about exceptions thrown by new DateTime.
+  def toDate(v: String): DateTime = new DateTime(v)
+
+  // Convert filtered map with valid data strings to a map of DateTime.
+  // We check that all of the date string are valid, so we can call new DateTime
+  // without fear of throwing an exception.
+  // If at least one of the dates is invalid, we return an empty Map, thus
+  // the entire set of shots for a given vaccine is rejected. An error message
+  // is given for the immunization administrator.
+  def convertDateStrings(filtered: Map[String, String]): Map[String, DateTime] = {
+    if (!validateDates(filtered)) {
+      println(" There is an invalid date for student " + fullName + "in the following sequence of shots\n" + filtered)
+      Map.empty
+    } else { filtered.map(kv => (kv._1, new DateTime(kv._2))) }
+  }
+
+  val dtapShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "dtap.*"))
+  val polioShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "polio.*"))
+  val mmrShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "mmr.*"))
+  val varicellaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "varicella.*"))
+  val hibShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hib.*"))
+  val hepaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepa.*"))
+  val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepb.*"))
 }
 
 class ProcessStudent(jsonMap: Map[String, String]) extends Student(jsonMap) {
@@ -554,10 +584,14 @@ object ImmunizationReport {
     val sample2Ast: spray.json.JsValue = sample2.parseJson
     val sample2Json: String = sample2Ast.prettyPrint
     println("\n------ sample2Json > " + sample2Json)
-    val sample2Map: List[Map[String, String]] = sample2Ast.convertTo[List[Map[String, String]]]
+    val sample2Map: List[Map[String, String]] =
+      sample2Ast.convertTo[List[Map[String, String]]]
     println("\n------ sample2Map > " + sample2Map)
     val student1: Map[String, String] = sample2Map(0)
     println("\n------ student1 > " + student1)
+    // val sample2MapDate: List[Map[String, String]] =
+    //    sample2Map.map(m => m.mapValues(d => new DateTime(d)))
+    // println("\n----- sample2MapDate > ", sample2MapDate)
 
     // println("\n------ 2000 characters from > " + filename)
     // print(glob.take(2000))
