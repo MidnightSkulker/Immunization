@@ -514,10 +514,13 @@ class Student(jsonMap: Map[String, String]) {
   val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepb.*"))
 }
 
-class ProcessStudent(jsonMap: Map[String, String]) extends Student(jsonMap) {
+class Students(students: List[Map[String, String]]) {
   // Process the doses of HepB.
   // val dtap = new DTAP(dob, filterShotsToList(jsonMap, "dtap.*"))
   // val dtapReport = dtap.immunizationStatus ()
+  def processStudents(students: List[Map[String, String]]): List[Student] = {
+    students.map(jm => new Student(jm))
+  }
 }
 
 // ----------------------------------------------------------------------------
