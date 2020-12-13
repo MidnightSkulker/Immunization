@@ -510,8 +510,20 @@ class Student(jsonMap: Map[String, String]) {
   val mmrShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "mmr.*"))
   val varicellaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "varicella.*"))
   val hibShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hib.*"))
-  val hepaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepa.*"))
-  val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepb.*"))
+  val hepaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepA.*"))
+  val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepB.*"))
+
+  // Print out a student.
+  def printStudent():Unit = {
+    println("Name: " + fullName + "\t\tDOB: " + dob)
+    println("DTAP Shots: \t" + dtapShots)
+    println("Polio Shots: \t" + polioShots)
+    println("MMR Shots: \t" + mmrShots)
+    println("Varicella Shots: \t" + varicellaShots)
+    println("HIB Shots: \t" + hibShots)
+    println("Hepatitus A Shots: \t" + hepaShots)
+    println("Hepatitus B Shots: \t" + hepbShots)
+  }
 }
 
 class Students(students: List[Map[String, String]]) {
@@ -565,7 +577,6 @@ object ImmunizationReport {
   "dtap2": "2010-08-06T00:00:00.000Z",
   "dtap3": "2010-11-05T00:00:00.000Z",
   "dtap4": "2011-10-03T00:00:00.000Z",
-  "dtap5": "",
   "polio1": "2010-06-23T00:00:00.000Z",
   "polio2": "2010-08-06T00:00:00.000Z",
   "polio3": "2010-11-05T00:00:00.000Z",
@@ -593,6 +604,11 @@ object ImmunizationReport {
     println("\n------ sample2Map > " + sample2Map)
     val student1: Map[String, String] = sample2Map(0)
     println("\n------ student1 > " + student1)
+    val sample2Students = new Students(sample2Map)
+    println("\n------ sample2Students\n")
+    val processed2Students : List[Student] = sample2Students.processStudents(sample2Map)
+    println("\n------ student1 > " + processed2Students(0).printStudent())
+
     // val sample2MapDate: List[Map[String, String]] =
     //    sample2Map.map(m => m.mapValues(d => new DateTime(d)))
     // println("\n----- sample2MapDate > ", sample2MapDate)
