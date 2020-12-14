@@ -15,7 +15,13 @@ import scala.util.matching.Regex
 
 trait VaccineStatus extends Enumeration () {
   type VaccineStatus = Value
-  val Incomplete, UpToDate, Complete, Error = Value
+  val Error, Incomplete, UpToDate, Complete = Value
+  def combinedStatus(ss: List[VaccineStatus]): VaccineStatus = {
+    if (ss.exists(x => x == Error)) Error
+    else if (ss.exists(x => x == Incomplete)) Incomplete
+    else if (ss.exists(x => x == UpToDate)) UpToDate
+      else Complete
+  }
 }
 
 trait AgeRange {
@@ -513,6 +519,18 @@ class Student(jsonMap: Map[String, String]) {
   // Validate the shots.
   val dtap: DTAP = new DTAP(dob, dtapShots)
   def validateDTAP(doses: Map[String, String]) = dtap.immunizationStatus()
+  val hib: HIB = new HIB(dob, hibShots)
+  def validateHIB(doses: Map[String, String]) = hib.immunizationStatus()
+  val polio: Polio = new Polio(dob, polioShots)
+  def validatePolio(doses: Map[String, String]) = polio.immunizationStatus()
+  val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
+  def validateVaricella(doses: Map[String, String]) = varicella.immunizationStatus()
+  val mmr: MMR = new MMR(dob, mmrShots)
+  def validateMMR(doses: Map[String, String]) = mmr.immunizationStatus()
+  val hepa: HEPA = new HEPA(dob, hepaShots)
+  def validateHEPA(doses: Map[String, String]) = hepa.immunizationStatus()
+  val hepb: HEPB = new HEPB(dob, hepbShots)
+  def validateHEPB(doses: Map[String, String]) = hepb.immunizationStatus()
 
   // Print out a student.
   def printStudent():Unit = {
