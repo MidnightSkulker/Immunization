@@ -16,12 +16,19 @@ import scala.util.matching.Regex
 trait VaccineStatus extends Enumeration () {
   type VaccineStatus = Value
   val Error, Incomplete, UpToDate, Complete = Value
-  def combinedStatus(ss: List[VaccineStatus]): VaccineStatus = {
+  // Make a summary status for the immunizations.
+  // All must be Complete to get a complete status.
+  // Otherwise, the status is the "least" status amongst the vaccines.
+  // For example, if there is at least one Error, the whole record is in Error.
+  // If there is no Error, but at least one Incomplete, the record is incomplete.
+  // If there are no Errors or Incompletes, and there is at least one UpToDate,
+  // then the record is UpToDate.
+  // Finally, if everything is Complete, the record is Complete.
+  def combinedStatus(ss: List[VaccineStatus]): VaccineStatus =
     if (ss.exists(x => x == Error)) Error
     else if (ss.exists(x => x == Incomplete)) Incomplete
     else if (ss.exists(x => x == UpToDate)) UpToDate
       else Complete
-  }
 }
 
 trait AgeRange {
