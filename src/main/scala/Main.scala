@@ -43,13 +43,10 @@ trait Recently {
     }
 }
 
-// Enumeration -> abstract vaccine -> specific doses.
-
 trait NewBorn {
   // Determine if the child is new born.
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
-
 
 // Get information about doses from Json data
 class ParseJsonDoses (filename: String) {
@@ -74,16 +71,19 @@ class ParseJsonDoses (filename: String) {
   // ***** Need to convert value to DateTime
 }
 
-// Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
-    extends VaccineStatus with AgeRange {
+class DateMap(name: String, doses: Map[String, DateTime]) extends Enumeration {
   // Get the nth dose, using ordinal numbers.
   def nth(n: Int) = doses(name.toLowerCase() + n)
-  def firstDose = nth(1)
-  def secondDose = nth(2)
-  def thirdDose = nth(3)
-  def fourthDose =  nth(4)
-  def fifthDose = nth(5)
+  def firstDose: DateTime = nth(1)
+  def secondDose: DateTime = nth(2)
+  def thirdDose: DateTime = nth(3)
+  def fourthDose:DateTime =  nth(4)
+  def fifthDose: DateTime = nth(5)
+}
+
+// Common operations on the doses given.
+class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
+    extends DateMap(name, doses) with AgeRange with VaccineStatus {
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
@@ -124,21 +124,17 @@ class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
           case Some(dose2) => dose2.isBefore(dose1.plusDays(days))
         }
     }
-  // Fill up the doses array.
-  def fillDoses(doses: Array[DateTime], max: Int): Array[DateTime] = {
-    for (j <- 0 to max) { doses(j) = null }
-    return null
-  }
 }
 
 // Vaccinations
 // Example names: DTAP, with maximum of 5 shots (vaccinations).
 //                Polio, with maximum of 5 shots (vaccinations).
-abstract class Vaccine(
-  name: String,
+abstract class Vaccine(name: String,
   dob: DateTime,
   doses: Map[String, DateTime],
-  max: Int) extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime]) {
+  max: Int)
+    extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
+{
   def immunizationStatus (): VaccineStatus = Error
 }
 
@@ -249,7 +245,6 @@ class HIB (dob: DateTime, doses: Map[String, DateTime])
         else Incomplete
       case 4 => Complete
       case default => Error
-
   }
 }
 
@@ -500,7 +495,8 @@ class Student(jsonMap: Map[String, String]) {
   // is given for the immunization administrator.
   def convertDateStrings(filtered: Map[String, String]): Map[String, DateTime] = {
     if (!validateDates(filtered)) {
-      println(" There is an invalid date for student " + fullName + "in the following sequence of shots\n" + filtered)
+      println(" There is an invalid date for student " +
+        fullName + "in the following sequence of shots\n" + filtered)
       Map.empty
     } else { filtered.map(kv => (kv._1, new DateTime(kv._2))) }
   }
@@ -508,10 +504,15 @@ class Student(jsonMap: Map[String, String]) {
   val dtapShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "dtap.*"))
   val polioShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "polio.*"))
   val mmrShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "mmr.*"))
-  val varicellaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "varicella.*"))
+  val varicellaShots: Map[String, DateTime] =
+    convertDateStrings(filterShots(jsonMap, "varicella.*"))
   val hibShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hib.*"))
   val hepaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepA.*"))
   val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepB.*"))
+
+  // Validate the shots.
+  val dtap: DTAP = new DTAP(dob, dtapShots)
+  def validateDTAP(doses: Map[String, String]) = dtap.immunizationStatus()
 
   // Print out a student.
   def printStudent():Unit = {
