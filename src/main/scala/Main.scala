@@ -13,9 +13,14 @@ import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
 
-trait VaccineStatus extends Enumeration () {
-  type VaccineStatus = Value
-  val Error, Incomplete, UpToDate, Complete = Value
+trait VaccineStatus {
+  // type VaccineStatus = Value
+  // val Error, Incomplete, UpToDate, Complete = Value
+  type VaccineStatus = Int
+  val Error = 0
+  val Incomplete = 1
+  val UpToDate = 2
+  val Complete = 3
   // Make a summary status for the immunizations.
   // All must be Complete to get a complete status.
   // Otherwise, the status is the "least" status amongst the vaccines.
@@ -24,7 +29,7 @@ trait VaccineStatus extends Enumeration () {
   // If there are no Errors or Incompletes, and there is at least one UpToDate,
   // then the record is UpToDate.
   // Finally, if everything is Complete, the record is Complete.
-  def combinedStatus(ss: List[VaccineStatus]): VaccineStatus =
+  def summaryStatus(ss: List[VaccineStatus]): VaccineStatus =
     if (ss.exists(x => x == Error)) Error
     else if (ss.exists(x => x == Incomplete)) Incomplete
     else if (ss.exists(x => x == UpToDate)) UpToDate
@@ -96,7 +101,7 @@ class DateMap(name: String, doses: Map[String, DateTime]) extends Enumeration {
 
 // Common operations on the doses given.
 class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
-    extends DateMap(name, doses) with AgeRange with VaccineStatus {
+    extends DateMap(name, doses) with AgeRange {
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
@@ -147,6 +152,7 @@ abstract class Vaccine(name: String,
   doses: Map[String, DateTime],
   max: Int)
     extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
+    with VaccineStatus
 {
   def immunizationStatus (): VaccineStatus = Error
 }
@@ -156,7 +162,6 @@ abstract class Vaccine(name: String,
 class DTAP (dob: DateTime, doses: Map[String, DateTime])
     extends Vaccine("DTAP", dob, doses, 5)
     with Younger
-    with VaccineStatus
     with Recently
     with NewBorn {
   override def immunizationStatus (): VaccineStatus =
@@ -208,13 +213,12 @@ class DTAP (dob: DateTime, doses: Map[String, DateTime])
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class HIB (dob: DateTime, doses: Map[String, DateTime])
-    extends Doses("DTAP", dob, doses)
+    extends Vaccine("HIB", dob, doses, 5)
     with Older
     with Younger
-    with VaccineStatus
     with NewBorn
     with Recently {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     doses.size match {
       case 0 =>
         // If child is less than 2 months old, HIB is not needed yet.
@@ -263,12 +267,11 @@ class HIB (dob: DateTime, doses: Map[String, DateTime])
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Polio (dob: DateTime, doses: Map[String, DateTime])
-    extends Doses("Polio", dob, doses)
+    extends Vaccine("Polio", dob, doses, 5)
     with Younger
-    with VaccineStatus
     with Recently
     with Older {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     doses.size match {
       case 0 =>
         // If child is less than 2 months old, Polio vaccine is not needed yet.
@@ -304,12 +307,11 @@ class Polio (dob: DateTime, doses: Map[String, DateTime])
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String, DateTime])
-    extends Doses("DTAP", dob, doses)
+    extends Vaccine("Varicella", dob, doses, 2)
     with Younger
     with Older
-    with VaccineStatus
     with Recently {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     if (diseaseHistory contains "Chicken Pox") Complete
     else
       doses.size match {
@@ -349,12 +351,11 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String,
 
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
 class MMR (dob: DateTime, doses: Map[String, DateTime])
-    extends Doses("DTAP", dob, doses)
-    with VaccineStatus
+    extends Vaccine("MMR", dob, doses, 2)
     with Younger
     with Older
     with Recently {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     if (youngerThan(dob, 5 * 12))
       doses.size match {
         case 0 =>
@@ -398,11 +399,10 @@ class MMR (dob: DateTime, doses: Map[String, DateTime])
 
 // Vaccination status rules for HEPA (Hepatitis A)
 class HEPA (dob: DateTime, doses: Map[String, DateTime])
-    extends Doses("DTAP", dob, doses)
-    with VaccineStatus
+    extends Vaccine("HepA", dob, doses, 4)
     with Younger
     with Recently {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     doses.size match {
       case 0 =>
         // Child is under 18 months old
@@ -433,12 +433,11 @@ class HEPA (dob: DateTime, doses: Map[String, DateTime])
 
 // Vaccination status rules for HEPB (Hepatitis B)
 class HEPB (dob: DateTime, doses: Map[String, DateTime])
-    extends Doses("DTAP", dob, doses)
-    with VaccineStatus
+    extends Vaccine("HepB", dob, doses, 3)
     with Younger
     with Older
     with Recently {
-  def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatus =
     doses.size match {
       case 0 =>
         // Child is under 2 months old.
@@ -476,7 +475,11 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
     }
 }
 
-class Student(jsonMap: Map[String, String]) {
+class Vapid {}
+
+class Student(jsonMap: Map[String, String])
+    extends Vapid
+    with VaccineStatus {
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
@@ -525,19 +528,23 @@ class Student(jsonMap: Map[String, String]) {
 
   // Validate the shots.
   val dtap: DTAP = new DTAP(dob, dtapShots)
-  def validateDTAP(doses: Map[String, String]) = dtap.immunizationStatus()
+  val dtapStatus: VaccineStatus = dtap.immunizationStatus()
   val hib: HIB = new HIB(dob, hibShots)
-  def validateHIB(doses: Map[String, String]) = hib.immunizationStatus()
+  val hibStatus: VaccineStatus = hib.immunizationStatus()
   val polio: Polio = new Polio(dob, polioShots)
-  def validatePolio(doses: Map[String, String]) = polio.immunizationStatus()
+  val polioStatus: VaccineStatus = polio.immunizationStatus()
   val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
-  def validateVaricella(doses: Map[String, String]) = varicella.immunizationStatus()
+  val varicellaStatus: VaccineStatus = varicella.immunizationStatus()
   val mmr: MMR = new MMR(dob, mmrShots)
-  def validateMMR(doses: Map[String, String]) = mmr.immunizationStatus()
+  val mmrStatus: VaccineStatus = mmr.immunizationStatus()
   val hepa: HEPA = new HEPA(dob, hepaShots)
-  def validateHEPA(doses: Map[String, String]) = hepa.immunizationStatus()
+  val hepaStatus: VaccineStatus = hepa.immunizationStatus()
   val hepb: HEPB = new HEPB(dob, hepbShots)
-  def validateHEPB(doses: Map[String, String]) = hepb.immunizationStatus()
+  val hepbStatus: VaccineStatus = hepb.immunizationStatus()
+  val gatherStatus: List[VaccineStatus] = List(dtapStatus,
+    hibStatus, polioStatus, varicellaStatus, mmrStatus, hepaStatus, hepbStatus)
+  // Summary Status
+  // val studentImmunizationStatus = summaryStatus(gatherStatus)
 
   // Print out a student.
   def printStudent():Unit = {
@@ -552,13 +559,20 @@ class Student(jsonMap: Map[String, String]) {
   }
 }
 
-class Students(students: List[Map[String, String]]) {
-  // Process the doses of HepB.
-  // val dtap = new DTAP(dob, filterShotsToList(jsonMap, "dtap.*"))
-  // val dtapReport = dtap.immunizationStatus ()
-  def processStudents(students: List[Map[String, String]]): List[Student] = {
-    students.map(jm => new Student(jm))
+class Students (students: List[Map[String, String]])
+    extends Vapid
+    with VaccineStatus
+{
+  def processOneStudent(studentJson: Map[String, String]) = {
+    val student: Student = new Student(studentJson)
+    val statuses:List[VaccineStatus] = student.gatherStatus
+    val summary: VaccineStatus = summaryStatus(statuses)
+    Error
   }
+  // def processStudents(students: List[Map[String, String]]): List[(Student, VaccineStatus)] = {
+  //   students.map(jm => new Student(jm))
+  //   List()
+  // }
 }
 
 // ----------------------------------------------------------------------------
@@ -630,10 +644,10 @@ object ImmunizationReport {
     println("\n------ sample2Map > " + sample2Map)
     val student1: Map[String, String] = sample2Map(0)
     println("\n------ student1 > " + student1)
-    val sample2Students = new Students(sample2Map)
-    println("\n------ sample2Students\n")
-    val processed2Students : List[Student] = sample2Students.processStudents(sample2Map)
-    println("\n------ student1 > " + processed2Students(0).printStudent())
+    // val sample2Students = new Students(sample2Map)
+    // println("\n------ sample2Students\n")
+    // val processed2Students : List[Student] = sample2Students.processStudents(sample2Map)
+    // println("\n------ student1 > " + processed2Students(0).printStudent())
 
     // val sample2MapDate: List[Map[String, String]] =
     //    sample2Map.map(m => m.mapValues(d => new DateTime(d)))
