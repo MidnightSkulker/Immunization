@@ -5,4 +5,5 @@ target
 *.log
 ARCHIVE
 credentials.json
+service_account.json
 temp

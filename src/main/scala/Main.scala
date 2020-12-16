@@ -136,11 +136,6 @@ abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: Vaccine
   def reportString = name + ": status for rule / " + desc + " / is " + stat
 }
 
-abstract class TwoDoseRule (name: String, desc: String, dob: DateTime, dose1: DateTime,
-  dose2: DateTime, months: Int, stat: VaccineStatus)
-    extends DOBRule(name, desc, dob, stat) {
-}
-
 class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatus)
     extends DOBRule(name, desc, dob, stat) with NewBorn {
   // Determine if the child is new born.
@@ -149,13 +144,20 @@ class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatus
     else (reportString, NA)
 }
 
+abstract class GeneralRule (name: String, desc: String, dob: DateTime, dose1: DateTime,
+  dose2: DateTime, months: Int, stat: VaccineStatus)
+    extends DOBRule(name, desc, dob, stat) {
+}
+
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
-class DTAP (dob: DateTime, doses: Map[String, DateTime])
+class DTAP (name: String, dob: DateTime, doses: Map[String, DateTime])
     extends Vaccine("dtap", dob, doses, 5)
     with Younger
     with Recently
     with NewBorn {
+  val rule01: NewBornRule(name, "0 doses and child is less than two months old", dob, UpToDate)
+  val rule02: NewBornRule(name, "0 doses and child is more than two months old", dob, Incomplete)
   override def immunizationStatus (): VaccineStatus =
   doses.size match {
     case 0 =>
