@@ -1,7 +1,3 @@
-// Can only declare a package for scalac compilation.
-// This is ignored in the REPL, it just generates a warning.
-// package com.twitter.example
-// package scala.language.implicitConversions
 // import cats.effect.IO
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
@@ -12,38 +8,6 @@ import org.joda.time.DateTime
 import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
-
-trait VaccineStatus {
-  // type VaccineStatus = Value
-  // val Error, Incomplete, UpToDate, Complete = Value
-  type VaccineStatus = Int
-  val Error = 0
-  val Incomplete = 1
-  val UpToDate = 2
-  val Complete = 3
-  // Make a summary status for the immunizations.
-  // All must be Complete to get a complete status.
-  // Otherwise, the status is the "least" status amongst the vaccines.
-  // For example, if there is at least one Error, the whole record is in Error.
-  // If there is no Error, but at least one Incomplete, the record is incomplete.
-  // If there are no Errors or Incompletes, and there is at least one UpToDate,
-  // then the record is UpToDate.
-  // Finally, if everything is Complete, the record is Complete.
-  def summaryStatus(ss: List[VaccineStatus]): VaccineStatus =
-    if (ss.exists(x => x == Error)) Error
-    else if (ss.exists(x => x == Incomplete)) Incomplete
-    else if (ss.exists(x => x == UpToDate)) UpToDate
-    else Complete
-
-  def outStatus(v: VaccineStatus): String =
-    v match {
-      case 0 => "Error"
-      case 1 => "Incomplete"
-      case 2 => "UpToDate"
-      case 3 => "Complete"
-      case x => "Really Error"
-    }
-}
 
 trait AgeRange {
   def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
@@ -164,6 +128,25 @@ abstract class Vaccine(name: String,
     with VaccineStatus
 {
   def immunizationStatus (): VaccineStatus = Error
+}
+
+abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatus)
+    extends Vapid with VaccineStatus {
+  def rule(): (String, VaccineStatus) = (reportString, NA)
+  def reportString = name + ": status for rule / " + desc + " / is " + stat
+}
+
+abstract class TwoDoseRule (name: String, desc: String, dob: DateTime, dose1: DateTime,
+  dose2: DateTime, months: Int, stat: VaccineStatus)
+    extends DOBRule(name, desc, dob, stat) {
+}
+
+class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatus)
+    extends DOBRule(name, desc, dob, stat) with NewBorn {
+  // Determine if the child is new born.
+  override def rule () =
+    if (isNewBorn(dob)) (reportString, UpToDate)
+    else (reportString, NA)
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
@@ -484,8 +467,6 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
       case 4 => Complete
     }
 }
-
-class Vapid {}
 
 class Student(jsonMap: Map[String, String])
     extends Vapid
