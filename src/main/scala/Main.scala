@@ -35,34 +35,11 @@ trait Recently {
 }
 
 trait NewBorn {
-  // Determine if the child is new born.
+  // Determine if the child is newly born.
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
-// Get information about doses from Json data
-class ParseJsonDoses (filename: String) {
-  // Convert a buffered source of strings to a string
-  def flattenSource(iter: BufferedSource): String = {
-    var glob: String = ""
-    for (line <- iter) { glob += line }
-    return glob
-  }
-  // Read the Json information from a file.
-  def readFile(filename: String): BufferedSource = fromFile(filename)
-  // Process the Json information into a string.
-  def stringify(file: BufferedSource): String = flattenSource(file)
-  // Convert json string into JsValue.
-  def jsonify(glob: String): spray.json.JsValue = glob.parseJson
-  // Convert JsValue into a list of maps, one per student.
-  def mapifyJson(json: spray.json.JsValue): List[Map[String, String]] =
-    json.convertTo[List[Map[String, String]]]
-  // Process all the way from the file to mapified Json.
-  def mapify(filename: String): List[Map[String, String]] =
-    stringify(readFile(filename)).parseJson.convertTo[List[Map[String, String]]]
-  // ***** Need to convert value to DateTime
-}
-
-class DateMap(name: String, doses: Map[String, DateTime]) extends Enumeration {
+class DateMap(name: String, doses: Map[String, DateTime]) {
   // Get the nth dose, using ordinal numbers.
   def nth(n: Int) = doses(name + n)
   def firstDose: DateTime = nth(1)
@@ -125,27 +102,26 @@ abstract class Vaccine(name: String,
   doses: Map[String, DateTime],
   max: Int)
     extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
-    with VaccineStatus
+    with VaccineStatuses
 {
-  def immunizationStatus (): VaccineStatus = Error
+  def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatus)
-    extends Vapid with VaccineStatus {
-  def rule(): (String, VaccineStatus) = (reportString, NA)
+abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatuses) extends VaccineStatuses {
+  def rule(): (String, VaccineStatuses) = (reportString, NA)
   def reportString = name + ": status for rule / " + desc + " / is " + stat
 }
 
-class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatus)
+class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatuses)
     extends DOBRule(name, desc, dob, stat) with NewBorn {
-  // Determine if the child is new born.
+  // Determine if the child is newly born.
   override def rule () =
     if (isNewBorn(dob)) (reportString, UpToDate)
     else (reportString, NA)
 }
 
 abstract class GeneralRule (name: String, desc: String, dob: DateTime, dose1: DateTime,
-  dose2: DateTime, months: Int, stat: VaccineStatus)
+  dose2: DateTime, months: Int, stat: VaccineStatuses)
     extends DOBRule(name, desc, dob, stat) {
 }
 
@@ -156,9 +132,9 @@ class DTAP (name: String, dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with Recently
     with NewBorn {
-  val rule01: NewBornRule(name, "0 doses and child is less than two months old", dob, UpToDate)
-  val rule02: NewBornRule(name, "0 doses and child is more than two months old", dob, Incomplete)
-  override def immunizationStatus (): VaccineStatus =
+  // val rule01 = new NewBornRule(name, "0 doses and child is less than two months old", dob, UpToDate: VaccineStatus)
+  // val rule02 = new NewBornRule(name, "0 doses and child is more than two months old", dob, Incomplete)
+  override def immunizationStatus (): VaccineStatuses =
   doses.size match {
     case 0 =>
       if (isNewBorn(dob)) UpToDate
@@ -212,7 +188,7 @@ class HIB (dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with NewBorn
     with Recently {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     doses.size match {
       case 0 =>
         // If child is less than 2 months old, HIB is not needed yet.
@@ -265,7 +241,7 @@ class Polio (dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with Recently
     with Older {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     doses.size match {
       case 0 =>
         // If child is less than 2 months old, Polio vaccine is not needed yet.
@@ -305,7 +281,7 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String,
     with Younger
     with Older
     with Recently {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     if (diseaseHistory contains "Chicken Pox") Complete
     else
       doses.size match {
@@ -349,7 +325,7 @@ class MMR (dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with Older
     with Recently {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     if (youngerThan(dob, 5 * 12))
       doses.size match {
         case 0 =>
@@ -396,7 +372,7 @@ class HEPA (dob: DateTime, doses: Map[String, DateTime])
     extends Vaccine("hepA", dob, doses, 4)
     with Younger
     with Recently {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     doses.size match {
       case 0 =>
         // Child is under 18 months old
@@ -431,7 +407,7 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with Older
     with Recently {
-  override def immunizationStatus (): VaccineStatus =
+  override def immunizationStatus (): VaccineStatuses =
     doses.size match {
       case 0 =>
         // Child is under 2 months old.
@@ -471,8 +447,7 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
 }
 
 class Student(jsonMap: Map[String, String])
-    extends Vapid
-    with VaccineStatus {
+    extends VaccineStatus {
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
@@ -490,11 +465,6 @@ class Student(jsonMap: Map[String, String])
   // Make sure all date strings in a map are valid.
   def validateDates(dm: Map[String, String]): Boolean =
     dm.map(kv => validateDate(kv._2)).forall(identity)
-
-  // Convert a date string to a DateTime.
-  // We will be calling this only with validate date time string, so no need
-  // to worry about exceptions thrown by new DateTime.
-  def toDate(v: String): DateTime = new DateTime(v)
 
   // Convert filtered map with valid data strings to a map of DateTime.
   // We check that all of the date string are valid, so we can call new DateTime
@@ -520,21 +490,21 @@ class Student(jsonMap: Map[String, String])
   val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepB.*"))
 
   // Validate the shots.
-  val dtap: DTAP = new DTAP(dob, dtapShots)
-  val dtapStatus: VaccineStatus = dtap.immunizationStatus()
+  val dtap: DTAP = new DTAP(fullName, dob, dtapShots)
+  val dtapStatus: VaccineStatuses = dtap.immunizationStatus()
   val hib: HIB = new HIB(dob, hibShots)
-  val hibStatus: VaccineStatus = hib.immunizationStatus()
+  val hibStatus: VaccineStatuses = hib.immunizationStatus()
   val polio: Polio = new Polio(dob, polioShots)
-  val polioStatus: VaccineStatus = polio.immunizationStatus()
+  val polioStatus: VaccineStatuses = polio.immunizationStatus()
   val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
-  val varicellaStatus: VaccineStatus = varicella.immunizationStatus()
+  val varicellaStatus: VaccineStatuses = varicella.immunizationStatus()
   val mmr: MMR = new MMR(dob, mmrShots)
-  val mmrStatus: VaccineStatus = mmr.immunizationStatus()
+  val mmrStatus: VaccineStatuses = mmr.immunizationStatus()
   val hepa: HEPA = new HEPA(dob, hepaShots)
-  val hepaStatus: VaccineStatus = hepa.immunizationStatus()
+  val hepaStatus: VaccineStatuses = hepa.immunizationStatus()
   val hepb: HEPB = new HEPB(dob, hepbShots)
-  val hepbStatus: VaccineStatus = hepb.immunizationStatus()
-  val gatherStatus: List[VaccineStatus] = List(dtapStatus,
+  val hepbStatus: VaccineStatuses = hepb.immunizationStatus()
+  val gatherStatus: List[VaccineStatuses] = List(dtapStatus,
     hibStatus, polioStatus, varicellaStatus, mmrStatus, hepaStatus, hepbStatus)
   // Summary Status
   // val studentImmunizationStatus = summaryStatus(gatherStatus)
@@ -553,22 +523,21 @@ class Student(jsonMap: Map[String, String])
 }
 
 class Students (students: List[Map[String, String]])
-    extends Vapid
-    with VaccineStatus
+    extends VaccineStatus
 {
-  def processOneStudent(studentJson: Map[String, String]): (String, VaccineStatus) = {
+  def processOneStudent(studentJson: Map[String, String]): (String, VaccineStatuses) = {
     val student: Student = new Student(studentJson)
-    val statuses:List[VaccineStatus] = student.gatherStatus
-    val summary: VaccineStatus = summaryStatus(statuses)
+    val statuses:List[VaccineStatuses] = student.gatherStatus
+    val summary: VaccineStatuses = summaryStatus(statuses)
     (student.fullName, summary)
   }
 
-  def processStudents(students: List[Map[String, String]]): List[(String, VaccineStatus)] =
+  def processStudents(students: List[Map[String, String]]): List[(String, VaccineStatuses)] =
     students.map(s => processOneStudent(s))
 }
 
 // ----------------------------------------------------------------------------
-object ImmunizationReport extends Vapid with VaccineStatus {
+object ImmunizationReport extends VaccineStatus with VaccineStatuses {
   def main(args: Array[String]): Unit = {
 
     // Object to parse the JSON information.
@@ -637,9 +606,9 @@ object ImmunizationReport extends Vapid with VaccineStatus {
     println("\n------ student1 > " + student1)
     val sampleStudents = new Students(sampleMap)
     println("\n------ sampleStudents\n")
-    val processedStudents : List[(String, VaccineStatus)] =
+    val processedStudents : List[(String, VaccineStatuses)] =
       sampleStudents.processStudents(sampleMap)
-    def outProcessedStudent(p: (String, VaccineStatus)) = (p._1, outStatus(p._2))
+    def outProcessedStudent(p: (String, VaccineStatuses)) = (p._1, outStatus(p._2))
     println("\n------ processedStudents > " + processedStudents.map(p => outProcessedStudent(p)))
 
     // val sample2MapDate: List[Map[String, String]] =
