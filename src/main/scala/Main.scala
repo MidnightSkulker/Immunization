@@ -1,3 +1,5 @@
+package com.pdw.immunization.model
+
 // import cats.effect.IO
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
@@ -10,8 +12,9 @@ import org.joda.time.Period
 import scala.util.matching.Regex
 
 trait AgeRange {
-  def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean =
+  def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean = {
     (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
+  }
 }
 
 trait Older {
@@ -101,13 +104,11 @@ abstract class Vaccine(name: String,
   dob: DateTime,
   doses: Map[String, DateTime],
   max: Int)
-    extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
-    with VaccineStatuses
-{
+    extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime]) {
   def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatuses) extends VaccineStatuses {
+abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatuses) {
   def rule(): (String, VaccineStatuses) = (reportString, NA)
   def reportString = name + ": status for rule / " + desc + " / is " + stat
 }
@@ -446,8 +447,7 @@ class HEPB (dob: DateTime, doses: Map[String, DateTime])
     }
 }
 
-class Student(jsonMap: Map[String, String])
-    extends VaccineStatus {
+class Student(jsonMap: Map[String, String]){
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
@@ -522,9 +522,7 @@ class Student(jsonMap: Map[String, String])
   }
 }
 
-class Students (students: List[Map[String, String]])
-    extends VaccineStatus
-{
+class Students (students: List[Map[String, String]]) {
   def processOneStudent(studentJson: Map[String, String]): (String, VaccineStatuses) = {
     val student: Student = new Student(studentJson)
     val statuses:List[VaccineStatuses] = student.gatherStatus
@@ -537,7 +535,7 @@ class Students (students: List[Map[String, String]])
 }
 
 // ----------------------------------------------------------------------------
-object ImmunizationReport extends VaccineStatus with VaccineStatuses {
+object ImmunizationReport {
   def main(args: Array[String]): Unit = {
 
     // Object to parse the JSON information.
@@ -610,6 +608,10 @@ object ImmunizationReport extends VaccineStatus with VaccineStatuses {
       sampleStudents.processStudents(sampleMap)
     def outProcessedStudent(p: (String, VaccineStatuses)) = (p._1, outStatus(p._2))
     println("\n------ processedStudents > " + processedStudents.map(p => outProcessedStudent(p)))
+
+    println("MAGIC_NUM = " + MAGIC_NUM + ", Margin.Left = " + Margin.LEFT)
+    // Try out DateMap
+    // val x: DateMap2 = Map("a" -> 1, "b" -> 2)
 
     // val sample2MapDate: List[Map[String, String]] =
     //    sample2Map.map(m => m.mapValues(d => new DateTime(d)))
