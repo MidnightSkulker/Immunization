@@ -110,22 +110,28 @@ abstract class Vaccine(name: String,
   def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class DOBRule (name: String, desc: String, dob: DateTime, stat: VaccineStatuses) {
+abstract class DOBRule (nDoses: Int, name: String, desc: String, dob: DateTime, status: VaccineStatuses) {
   def rule(): (String, VaccineStatuses) = (reportString, NA)
-  def reportString = name + ": status for rule / " + desc + " / is " + stat
+  def reportString = name + ": status for rule / " + desc + " / is " + status
 }
 
-class NewBornRule(name: String, desc: String, dob: DateTime, stat: VaccineStatuses)
-    extends DOBRule(name, desc, dob, stat) with NewBorn {
+class NewBornRule(numberOfDoses: Int, name: String, description: String, dob: DateTime, status: VaccineStatuses)
+    extends DOBRule(numberOfDoses, name, description, dob, status) with NewBorn {
   // Determine if the child is newly born.
   override def rule () =
     if (isNewBorn(dob)) (reportString, UpToDate)
     else (reportString, NA)
 }
 
-abstract class GeneralRule (name: String, desc: String, dob: DateTime, dose1: DateTime,
-  dose2: DateTime, months: Int, stat: VaccineStatuses)
-    extends DOBRule(name, desc, dob, stat) {
+abstract class GeneralRule (numberOfDoses: Int,
+  name: String,
+  description: String,
+  dob: DateTime,
+  dose1: DateTime,
+  dose2: DateTime,
+  months: Int,
+  status: VaccineStatuses)
+    extends DOBRule(numberOfDoses, name, description, dob, status) {
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
@@ -135,8 +141,22 @@ class DTAP (name: String, dob: DateTime, doses: Map[String, DateTime])
     with Younger
     with Recently
     with NewBorn {
-  // val rule01 = new NewBornRule(name, "0 doses and child is less than two months old", dob, UpToDate: VaccineStatus)
-  // val rule02 = new NewBornRule(name, "0 doses and child is more than two months old", dob, Incomplete)
+  val rule01 = new NewBornRule(numberOfDoses = 0,
+    name,
+    description = "0 doses and child is less than two months old",
+    dob = dob,
+    status = UpToDate)
+  val rule02 = new NewBornRule(numberOfDoses = 0,
+    name,
+    description = "0 doses and child is more than two months old",
+    dob,
+    status = Incomplete)
+  val rule11 = new NewBornRule(numberOfDoses = 1,
+    name,
+    description = "Less than 2 months old or child is less than 4 months of age",
+    dob,
+    status = UpToDate)
+
   override def immunizationStatus (): VaccineStatuses =
   doses.size match {
     case 0 =>
