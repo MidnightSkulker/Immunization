@@ -1,3 +1,5 @@
+package json
+
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol
 import scala.io.Source._

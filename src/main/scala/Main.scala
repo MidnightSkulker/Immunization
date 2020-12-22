@@ -1,4 +1,4 @@
-package com.pdw.immunization.model
+// package com.pdw.immunization
 
 // import cats.effect.IO
 import spray.json._
@@ -10,6 +10,8 @@ import org.joda.time.DateTime
 import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
+import models.model._
+import json._
 
 trait AgeRange {
   def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean = {
@@ -535,8 +537,8 @@ class Students (students: List[Map[String, String]]) {
 }
 
 // ----------------------------------------------------------------------------
-object ImmunizationReport {
-  def main(args: Array[String]): Unit = {
+object Main extends App {
+  override def main(args: Array[String]): Unit = {
 
     // Object to parse the JSON information.
     val parser = new ParseJsonDoses ("inputs/ImmunizationData.json")
