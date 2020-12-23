@@ -1,5 +1,3 @@
-// package com.pdw.immunization
-
 // import cats.effect.IO
 import spray.json._
 import DefaultJsonProtocol._ // if you don't supply your own Protocol (see below)
@@ -129,18 +127,36 @@ abstract class DOBRule (numberOfDoses: Int,
   name: String,
   description: String,
   dob: DateTime,
-  status: VaccineStatuses) extends GeneralRule(numberOfDoses, name, description, dob, null, null, 0, NA) {
+  status: VaccineStatuses)
+    extends GeneralRule(numberOfDoses, name, description, dob, null, null, 0, NA) {
 }
 
+// Rules that require that a child is newly born.
 class NewBornRule(numberOfDoses: Int,
   name: String,
   description: String,
   dob: DateTime,
   status: VaccineStatuses)
     extends DOBRule(numberOfDoses, name, description, dob, status) with NewBorn {
-  // Determine if the child is newly born.
   override def rule () =
     if (isNewBorn(dob)) (reportString, UpToDate)
+    else (reportString, NA)
+}
+
+// Rules that require if a child is younger than some age, and the
+// dose in question is relatively recent.
+class YoungerAndRecent(numberOfDoses: Int,
+  name: String,
+  description: String,
+  dob: DateTime,
+  dose: DateTime,
+  month: Int,
+  status: VaccineStatuses)
+    extends GeneralRule (numberOfDoses, name, description, dob, dose, null, month, NA)
+    with Younger
+    with Recently {
+  override def rule () =
+    if ((youngerThan(dob, month)) || (recently(dose, month))) (reportString, UpToDate)
     else (reportString, NA)
 }
 
@@ -161,10 +177,12 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     description = "0 doses and child is more than two months old",
     dob,
     status = Incomplete)
-  val rule11 = new NewBornRule(numberOfDoses = 1,
+  val rule11 = new YoungerAndRecent(numberOfDoses = 1,
     name,
-    description = "Less than 2 months old or child is less than 4 months of age",
+    description = "Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago",
     dob,
+    dose = firstDose,
+    month = 4, // **** Need two month params.
     status = UpToDate)
 
   override def immunizationStatus (): VaccineStatuses =
