@@ -111,14 +111,25 @@ abstract class Vaccine(name: String,
   def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class DOBRule (numberOfDoses: Int,
+abstract class GeneralRule (numberOfDoses: Int,
   name: String,
-  desc: String,
+  description: String,
   dob: DateTime,
+  dose1: DateTime,
+  dose2: DateTime,
+  months: Int,
   status: VaccineStatuses) {
+    // extends DOBRule(numberOfDoses, name, description, dob, status) {
   def rule(): (String, VaccineStatuses) = (reportString, NA)
   def reportString = name + ": status for rule (" + numberOfDoses + " doses) / " +
-                     desc + " / is " + status
+                     description + " / is " + status
+}
+
+abstract class DOBRule (numberOfDoses: Int,
+  name: String,
+  description: String,
+  dob: DateTime,
+  status: VaccineStatuses) extends GeneralRule(numberOfDoses, name, description, dob, null, null, 0, NA) {
 }
 
 class NewBornRule(numberOfDoses: Int,
@@ -131,17 +142,6 @@ class NewBornRule(numberOfDoses: Int,
   override def rule () =
     if (isNewBorn(dob)) (reportString, UpToDate)
     else (reportString, NA)
-}
-
-abstract class GeneralRule (numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  dose1: DateTime,
-  dose2: DateTime,
-  months: Int,
-  status: VaccineStatuses)
-    extends DOBRule(numberOfDoses, name, description, dob, status) {
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
