@@ -480,7 +480,7 @@ class HEPB (dob: DateTime, doses: DateMap)
 }
 
 class Student(jsonMap: JsonMap){
-  def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
+  def filterShots(jm: JsonMap, shotRegex: String): JsonMap =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
   val fullName = jsonMap("firstName") + " " + jsonMap("lastName")
@@ -495,8 +495,7 @@ class Student(jsonMap: JsonMap){
     } catch { case e: Any => false }
 
   // Make sure all date strings in a map are valid.
-  def validateDates(dm: Map[String, String]): Boolean =
-    dm.map(kv => validateDate(kv._2)).forall(identity)
+  def validateDates(dm: JsonMap): Boolean = dm.map(kv => validateDate(kv._2)).forall(identity)
 
   // Convert filtered map with valid data strings to a map of DateTime.
   // We check that all of the date string are valid, so we can call new DateTime
@@ -504,7 +503,7 @@ class Student(jsonMap: JsonMap){
   // If at least one of the dates is invalid, we return an empty Map, thus
   // the entire set of shots for a given vaccine is rejected. An error message
   // is given for the immunization administrator.
-  def convertDateStrings(filtered: Map[String, String]): DateMap = {
+  def convertDateStrings(filtered: JsonMap): DateMap = {
     if (!validateDates(filtered)) {
       println(" There is an invalid date for student " +
         fullName + "in the following sequence of shots\n" + filtered)
@@ -562,7 +561,7 @@ class Students (students: JsonMaps) {
     (student.fullName, summary)
   }
 
-  def processStudents(students: List[Map[String, String]]): List[(String, VaccineStatuses)] =
+  def processStudents(students: JsonMaps): List[(String, VaccineStatuses)] =
     students.map(s => processOneStudent(s))
 }
 
@@ -630,9 +629,9 @@ object Main extends App {
     val sampleAst: spray.json.JsValue = sample.parseJson
     val sampleJson: String = sampleAst.prettyPrint
     println("\n------ sampleJson > " + sampleJson)
-    val sampleMap: List[Map[String, String]] = sampleAst.convertTo[List[Map[String, String]]]
+    val sampleMap: JsonMaps = sampleAst.convertTo[JsonMaps]
     println("\n------ sampleMap > " + sampleMap)
-    val student1: Map[String, String] = sampleMap(0)
+    val student1: JsonMap = sampleMap(0)
     println("\n------ student1 > " + student1)
     val sampleStudents = new Students(sampleMap)
     println("\n------ sampleStudents\n")
@@ -645,7 +644,7 @@ object Main extends App {
     // print(glob.take(2000))
     // println("\n------ parsedJson > " + jsonImmunizations.prettyPrint)
     // println("\n------ jsonListMap > " + jsonImmunizations.prettyPrint)
-    // val jsonListMap = jsonAst.convertTo[List[Map[String, String]] ]
+    // val jsonListMap = jsonAst.convertTo[JsonMaps]
     // println("\n------ characters straight from >>>> " + filename)
     // var j = 0
     // for (line <- file.getLines) {
