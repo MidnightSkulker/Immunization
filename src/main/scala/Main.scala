@@ -44,7 +44,7 @@ trait NewBorn {
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
-class DoseDateMap(name: String, doses: Map[String, DateTime]) {
+class DoseDateMap(name: String, doses: DateMap) {
   // Get the nth dose, using ordinal numbers. All the elements of the map are
   // assumed to have the a name in a series, such as "dtap1", "dtap2", ...
   def nth(n: Int) = doses(name + n)
@@ -56,7 +56,7 @@ class DoseDateMap(name: String, doses: Map[String, DateTime]) {
 }
 
 // Common operations on the doses given.
-class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
+class Doses(name: String, dob: DateTime, doses: DateMap)
     extends DoseDateMap(name, doses) with AgeRange {
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(nth(dose), dob, startMonth, endMonth)
@@ -105,9 +105,9 @@ class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
 //                Polio, with maximum of 5 shots (vaccinations).
 abstract class Vaccine(name: String,
   dob: DateTime,
-  doses: Map[String, DateTime],
+  doses: DateMap,
   max: Int)
-    extends Doses(name: String, dob: DateTime, doses: Map[String, DateTime]) {
+    extends Doses(name: String, dob: DateTime, doses: DateMap) {
   def immunizationStatus (): VaccineStatuses = NA
 }
 
@@ -146,7 +146,7 @@ abstract class GeneralRule (numberOfDoses: Int,
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
-class DTAP (name: String, dob: DateTime, doses: Map[String, DateTime])
+class DTAP (name: String, dob: DateTime, doses: DateMap)
     extends Vaccine("dtap", dob, doses, 5)
     with Younger
     with Recently
@@ -215,7 +215,7 @@ class DTAP (name: String, dob: DateTime, doses: Map[String, DateTime])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class HIB (dob: DateTime, doses: Map[String, DateTime])
+class HIB (dob: DateTime, doses: DateMap)
     extends Vaccine("HIB", dob, doses, 5)
     with Older
     with Younger
@@ -269,7 +269,7 @@ class HIB (dob: DateTime, doses: Map[String, DateTime])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Polio (dob: DateTime, doses: Map[String, DateTime])
+class Polio (dob: DateTime, doses: DateMap)
     extends Vaccine("polio", dob, doses, 5)
     with Younger
     with Recently
@@ -309,7 +309,7 @@ class Polio (dob: DateTime, doses: Map[String, DateTime])
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
-class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String, DateTime])
+class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     extends Vaccine("varicella", dob, doses, 2)
     with Younger
     with Older
@@ -353,7 +353,7 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: Map[String,
 }
 
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
-class MMR (dob: DateTime, doses: Map[String, DateTime])
+class MMR (dob: DateTime, doses: DateMap)
     extends Vaccine("mmr", dob, doses, 2)
     with Younger
     with Older
@@ -401,7 +401,7 @@ class MMR (dob: DateTime, doses: Map[String, DateTime])
 }
 
 // Vaccination status rules for HEPA (Hepatitis A)
-class HEPA (dob: DateTime, doses: Map[String, DateTime])
+class HEPA (dob: DateTime, doses: DateMap)
     extends Vaccine("hepA", dob, doses, 4)
     with Younger
     with Recently {
@@ -435,7 +435,7 @@ class HEPA (dob: DateTime, doses: Map[String, DateTime])
 }
 
 // Vaccination status rules for HEPB (Hepatitis B)
-class HEPB (dob: DateTime, doses: Map[String, DateTime])
+class HEPB (dob: DateTime, doses: DateMap)
     extends Vaccine("hepB", dob, doses, 3)
     with Younger
     with Older
@@ -504,7 +504,7 @@ class Student(jsonMap: Map[String, String]){
   // If at least one of the dates is invalid, we return an empty Map, thus
   // the entire set of shots for a given vaccine is rejected. An error message
   // is given for the immunization administrator.
-  def convertDateStrings(filtered: Map[String, String]): Map[String, DateTime] = {
+  def convertDateStrings(filtered: Map[String, String]): DateMap = {
     if (!validateDates(filtered)) {
       println(" There is an invalid date for student " +
         fullName + "in the following sequence of shots\n" + filtered)
@@ -512,14 +512,14 @@ class Student(jsonMap: Map[String, String]){
     } else { filtered.map(kv => (kv._1, new DateTime(kv._2))) }
   }
 
-  val dtapShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "dtap.*"))
-  val polioShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "polio.*"))
-  val mmrShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "mmr.*"))
-  val varicellaShots: Map[String, DateTime] =
+  val dtapShots: DateMap = convertDateStrings(filterShots(jsonMap, "dtap.*"))
+  val polioShots: DateMap = convertDateStrings(filterShots(jsonMap, "polio.*"))
+  val mmrShots: DateMap = convertDateStrings(filterShots(jsonMap, "mmr.*"))
+  val varicellaShots: DateMap =
     convertDateStrings(filterShots(jsonMap, "varicella.*"))
-  val hibShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hib.*"))
-  val hepaShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepA.*"))
-  val hepbShots: Map[String, DateTime] = convertDateStrings(filterShots(jsonMap, "hepB.*"))
+  val hibShots: DateMap = convertDateStrings(filterShots(jsonMap, "hib.*"))
+  val hepaShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepA.*"))
+  val hepbShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepB.*"))
 
   // Validate the shots.
   val dtap: DTAP = new DTAP(fullName, dob, dtapShots)
