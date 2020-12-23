@@ -4,9 +4,12 @@ import org.joda.time.DateTime
 
 package object model {
 
+  // Maps for Json data.
+  type JsonMap = Map[String, String]
+  type JsonMaps = List[JsonMap]
+
   // Store doses of one or more vaccines.
   type DateMap = scala.collection.immutable.Map[String, DateTime]
-  val MutableMap = scala.collection.mutable.Map
 
   type VaccineStatuses = Int
   val NA: VaccineStatuses = 0

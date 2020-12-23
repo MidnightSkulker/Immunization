@@ -44,7 +44,7 @@ trait NewBorn {
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
-class DoseDateMap(name: String, doses: DateMap) {
+class DoseMap(name: String, doses: DateMap) {
   // Get the nth dose, using ordinal numbers. All the elements of the map are
   // assumed to have the a name in a series, such as "dtap1", "dtap2", ...
   def nth(n: Int) = doses(name + n)
@@ -57,7 +57,7 @@ class DoseDateMap(name: String, doses: DateMap) {
 
 // Common operations on the doses given.
 class Doses(name: String, dob: DateTime, doses: DateMap)
-    extends DoseDateMap(name, doses) with AgeRange {
+    extends DoseMap(name, doses) with AgeRange {
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
@@ -479,7 +479,7 @@ class HEPB (dob: DateTime, doses: DateMap)
     }
 }
 
-class Student(jsonMap: Map[String, String]){
+class Student(jsonMap: JsonMap){
   def filterShots(jm: Map[String, String], shotRegex: String): Map[String, String] =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
@@ -554,8 +554,8 @@ class Student(jsonMap: Map[String, String]){
   }
 }
 
-class Students (students: List[Map[String, String]]) {
-  def processOneStudent(studentJson: Map[String, String]): (String, VaccineStatuses) = {
+class Students (students: JsonMaps) {
+  def processOneStudent(studentJson: JsonMap): (String, VaccineStatuses) = {
     val student: Student = new Student(studentJson)
     val statuses:List[VaccineStatuses] = student.gatherStatus
     val summary: VaccineStatuses = summaryStatus(statuses)
@@ -571,8 +571,8 @@ object Main extends App {
   override def main(args: Array[String]): Unit = {
 
     // Object to parse the JSON information.
-    val parser = new ParseJsonDoses ("inputs/ImmunizationData.json")
-    val doseMaps: List[Map[String, String]] = parser.mapify("inputs/ImmunizationData.json")
+    val parser = new json.JsonDoses ("inputs/ImmunizationData.json")
+    val doseMaps: JsonMaps = parser.mapify("inputs/ImmunizationData.json")
     val x1 = doseMaps(0)("dtap1")
     val x2 = doseMaps(1)("dtap2")
     println("======= > x1, x2 = ", x1, x2)
