@@ -1,15 +1,11 @@
-// package com.pdw.immunization
 package models
 
-import spray.json._
-import DefaultJsonProtocol._ // if you don't supply your own Protocol
-import scala.io.Source._
-import scala.io.BufferedSource
+import org.joda.time.DateTime
 
 package object model {
 
-  // type definition
-  type MutableMap[K, V] = scala.collection.mutable.Map[K, V]
+  // Store doses of one or more vaccines.
+  type DateMap = scala.collection.immutable.Map[String, DateTime]
   val MutableMap = scala.collection.mutable.Map
 
   type VaccineStatuses = Int

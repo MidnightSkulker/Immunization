@@ -44,8 +44,9 @@ trait NewBorn {
   def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
 }
 
-class DateMap(name: String, doses: Map[String, DateTime]) {
-  // Get the nth dose, using ordinal numbers.
+class DoseDateMap(name: String, doses: Map[String, DateTime]) {
+  // Get the nth dose, using ordinal numbers. All the elements of the map are
+  // assumed to have the a name in a series, such as "dtap1", "dtap2", ...
   def nth(n: Int) = doses(name + n)
   def firstDose: DateTime = nth(1)
   def secondDose: DateTime = nth(2)
@@ -56,7 +57,7 @@ class DateMap(name: String, doses: Map[String, DateTime]) {
 
 // Common operations on the doses given.
 class Doses(name: String, dob: DateTime, doses: Map[String, DateTime])
-    extends DateMap(name, doses) with AgeRange {
+    extends DoseDateMap(name, doses) with AgeRange {
   def doseNwithinAgePeriod(dose: Int, startMonth: Int, endMonth: Int): Boolean =
     withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
