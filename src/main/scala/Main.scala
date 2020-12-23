@@ -110,12 +110,21 @@ abstract class Vaccine(name: String,
   def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class DOBRule (nDoses: Int, name: String, desc: String, dob: DateTime, status: VaccineStatuses) {
+abstract class DOBRule (numberOfDoses: Int,
+  name: String,
+  desc: String,
+  dob: DateTime,
+  status: VaccineStatuses) {
   def rule(): (String, VaccineStatuses) = (reportString, NA)
-  def reportString = name + ": status for rule / " + desc + " / is " + status
+  def reportString = name + ": status for rule (" + numberOfDoses + " doses) / " +
+                     desc + " / is " + status
 }
 
-class NewBornRule(numberOfDoses: Int, name: String, description: String, dob: DateTime, status: VaccineStatuses)
+class NewBornRule(numberOfDoses: Int,
+  name: String,
+  description: String,
+  dob: DateTime,
+  status: VaccineStatuses)
     extends DOBRule(numberOfDoses, name, description, dob, status) with NewBorn {
   // Determine if the child is newly born.
   override def rule () =
@@ -630,14 +639,6 @@ object Main extends App {
       sampleStudents.processStudents(sampleMap)
     def outProcessedStudent(p: (String, VaccineStatuses)) = (p._1, outStatus(p._2))
     println("\n------ processedStudents > " + processedStudents.map(p => outProcessedStudent(p)))
-
-    println("MAGIC_NUM = " + MAGIC_NUM + ", Margin.Left = " + Margin.LEFT)
-    // Try out DateMap
-    // val x: DateMap2 = Map("a" -> 1, "b" -> 2)
-
-    // val sample2MapDate: List[Map[String, String]] =
-    //    sample2Map.map(m => m.mapValues(d => new DateTime(d)))
-    // println("\n----- sample2MapDate > ", sample2MapDate)
 
     // println("\n------ 2000 characters from > " + filename)
     // print(glob.take(2000))
