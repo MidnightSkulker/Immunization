@@ -10,6 +10,7 @@ import org.joda.time.Period
 import scala.util.matching.Regex
 import models.model._
 import json._
+import rules._
 
 trait AgeRange {
   def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean = {
