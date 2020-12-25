@@ -54,9 +54,16 @@ class RuleBit(description: String, factors: Factors, condition: Function1[Factor
   def &&(rb: RuleBit): RuleBit = {
     val combinedDescription = this.description + " and " + rb.description
     def combinedCondition(f: Factors): Boolean = this.condition()(f) && rb.condition()(f)
-    new RuleBit(combinedDescription,
-      factors,
-      combinedCondition
-      )
+    new RuleBit(combinedDescription, factors, combinedCondition)
+  }
+  def ||(rb: RuleBit): RuleBit = {
+    val combinedDescription = this.description + " or " + rb.description
+    def combinedCondition(f: Factors): Boolean = this.condition()(f) || rb.condition()(f)
+    new RuleBit(combinedDescription, factors, combinedCondition)
+  }
+  def !(): RuleBit = {
+    val combinedDescription = "not " + this.description
+    def combinedCondition(f: Factors): Boolean = !this.condition()(f)
+    new RuleBit(combinedDescription, factors, combinedCondition)
   }
 }
