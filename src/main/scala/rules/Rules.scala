@@ -49,21 +49,21 @@ class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
 }
 
 class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
-  def condition(): Function1[Factors, Boolean] = condition
+  val conditionv: Function1[Factors, Boolean] = condition
   def description(): String = description
   def &&(rb: RuleBit): RuleBit = {
     val combinedDescription = this.description + " and " + rb.description
-    def combinedCondition(f: Factors): Boolean = this.condition()(f) && rb.condition()(f)
+    def combinedCondition(f: Factors): Boolean = this.conditionv(f) && rb.conditionv(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
   def ||(rb: RuleBit): RuleBit = {
     val combinedDescription = this.description + " or " + rb.description
-    def combinedCondition(f: Factors): Boolean = this.condition()(f) || rb.condition()(f)
+    def combinedCondition(f: Factors): Boolean = this.conditionv(f) || rb.conditionv(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
   def !(): RuleBit = {
     val combinedDescription = "not " + this.description
-    def combinedCondition(f: Factors): Boolean = !this.condition()(f)
+    def combinedCondition(f: Factors): Boolean = !this.conditionv(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
 }
