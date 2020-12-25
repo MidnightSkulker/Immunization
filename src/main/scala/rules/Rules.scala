@@ -1,5 +1,6 @@
 package rules
 
+import models.model._
 import org.joda.time.DateTime
 
 // Factors that influence an immunization status.
@@ -49,21 +50,27 @@ class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
 }
 
 class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
-  val conditionv: Function1[Factors, Boolean] = condition
-  def description(): String = description
+  val cond: Function1[Factors, Boolean] = condition
+  def description(): String = factors.description
   def &&(rb: RuleBit): RuleBit = {
-    val combinedDescription = this.description + " and " + rb.description
-    def combinedCondition(f: Factors): Boolean = this.conditionv(f) && rb.conditionv(f)
+    val combinedDescription = this.description + " and " + rb.description()
+    def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
   def ||(rb: RuleBit): RuleBit = {
-    val combinedDescription = this.description + " or " + rb.description
-    def combinedCondition(f: Factors): Boolean = this.conditionv(f) || rb.conditionv(f)
+    val combinedDescription = factors.description + " or " + rb.description()
+    def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
   def !(): RuleBit = {
     val combinedDescription = "not " + this.description
-    def combinedCondition(f: Factors): Boolean = !this.conditionv(f)
+    def combinedCondition(f: Factors): Boolean = !this.cond(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
+}
+
+class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
+  def condition(f: Factors): VaccineStatuses =
+    if (ruleBit.cond(factors)) status else NA
+  def description(): String = ruleBit.description()
 }
