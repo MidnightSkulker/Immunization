@@ -48,3 +48,6 @@ class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
       history = false) {
 }
 
+class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
+  def &&(rb: RuleBit): RuleBit = new RuleBit("", factors, condition) // this.condition() && rb.condition()
+}
