@@ -70,6 +70,7 @@ class RuleBit(description: String, factors: Factors, condition: Function1[Factor
 }
 
 case class RuleResult(description: String, factors: Factors, status: VaccineStatuses)
+case class RulesResult(finalStatus: VaccineStatuses, report: String, factors: Factors, results: List[RuleResult])
 
 // A single rule such as
 // "0 doses and child is less than two months old" ==> UpToDate
@@ -79,7 +80,7 @@ case class RuleResult(description: String, factors: Factors, status: VaccineStat
 class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
   def condition(f: Factors): VaccineStatuses =
     if (ruleBit.cond(factors)) status else NA
-  def applyRule(f: Factors): RuleResult = new RuleResult(this.description(), f, condition(f))
+  def applyRule(): RuleResult = new RuleResult(this.description(), factors, condition(factors))
   def description(): String = ruleBit.description()
 }
 
@@ -87,7 +88,32 @@ class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
 // Each rule in the rule set considers a different case, and renders a decision.
 // If none of the rules render a decision, the vaccine status will be Incomplete.
 abstract class Rules(factors: Factors, rules: List[Rule]) {
-  def decision(): VaccineStatuses
-  def report(): String
-  def applyRules(): List[RuleResult] = List()
+  // Get a rule result for each rule in the list of rules.
+  def applyRules(): List[RuleResult] = rules.map(r => r.applyRule())
+  // Summary decision for all the rules.
+  def documentedDecision(): RulesResult = {
+    val results: List[RuleResult] = applyRules()
+    val statuses: List[VaccineStatuses] = results.map(x => x.status)
+    val notNAStatuses: List[VaccineStatuses] = statuses.filter(_ != NA)
+    var report: String = "No Report"
+    val finalStatus =
+      notNAStatuses.size match {
+        case 0 =>
+          report = "No rule matched"
+          NA // Exactly one rule should match.
+        case 1 =>
+          // Find the one rule that matches.
+          val successfulRule: Option[RuleResult] = results.find(x => x.status != NA)
+          report = successfulRule match {
+            case Some (rule) => rule.description
+            case None => throw new RuntimeException("class Rules, finalStatus, Did not find rule result that was already found")
+          }
+          notNAStatuses(0)
+        case 2 =>
+          report = "More than one rule matched"
+          Error // Only one rule should match.
+      }
+    return new RulesResult(finalStatus, report, factors, results)
+  }
+  def report(): String = documentedDecision().report
 }
