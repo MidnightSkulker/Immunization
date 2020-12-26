@@ -69,8 +69,21 @@ class RuleBit(description: String, factors: Factors, condition: Function1[Factor
   }
 }
 
+// A single rule such as
+// "0 doses and child is less than two months old" ==> UpToDate
+//
+// The rule set considers the factors of a rule and renders a decision,
+// where the decision is a Vaccine Status, such as UpToDate.
 class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
   def condition(f: Factors): VaccineStatuses =
     if (ruleBit.cond(factors)) status else NA
   def description(): String = ruleBit.description()
+}
+
+// A rule set is a collection of rules.
+// Each rule in the rule set considers a different case, and renders a decision.
+// If none of the rules render a decision, the vaccine status will be Incomplete.
+abstract class RuleSet(factors: Factors, rules: List[Rule]) {
+  def decision(): VaccineStatuses
+  def report(): String
 }
