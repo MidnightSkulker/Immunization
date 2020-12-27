@@ -93,25 +93,12 @@ abstract class Rules(factors: Factors, rules: List[Rule]) {
   // Summary decision for all the rules.
   def documentedDecision(): RulesResult = {
     val results: List[RuleResult] = applyRules()
-    val statuses: List[VaccineStatuses] = results.map(x => x.status)
-    val notNAStatuses: List[VaccineStatuses] = statuses.filter(_ != NA)
-    var report: String = "No Report"
-    val finalStatus =
-      notNAStatuses.size match {
-        case 0 =>
-          report = "No rule matched"
-          NA // Exactly one rule should match.
-        case 1 =>
-          // Find the one rule that matches.
-          val successfulRule: Option[RuleResult] = results.find(x => x.status != NA)
-          report = successfulRule match {
-            case Some (rule) => rule.description
-            case None => throw new RuntimeException("class Rules, finalStatus, Did not find rule result that was already found")
-          }
-          notNAStatuses(0)
-        case 2 =>
-          report = "More than one rule matched"
-          Error // Only one rule should match.
+    val nonNAResults: List[RuleResult] = results.filter(r => r.status != NA)
+    val (finalStatus, report) =
+      nonNAResults.size match {
+        case 0 => (NA, "No rule matched") // Exactly one rule should match.
+        case 1 => (nonNAResults(0).status, nonNAResults(0).description)
+        case 2 => (Error, "More than one rule matched")
       }
     return new RulesResult(finalStatus, report, factors, results)
   }
