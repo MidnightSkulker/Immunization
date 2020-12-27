@@ -89,7 +89,7 @@ class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
 // If none of the rules render a decision, the vaccine status will be Incomplete.
 abstract class Rules(factors: Factors, rules: List[Rule]) {
   // Get a rule result for each rule in the list of rules.
-  def applyRules(): List[RuleResult] = rules.map(r => r.applyRule())
+  def applyRules(): List[RuleResult] = rules.map(_.applyRule)
   // Summary decision for all the rules.
   def documentedDecision(): RulesResult = {
     val results: List[RuleResult] = applyRules()
