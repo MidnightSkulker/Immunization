@@ -87,7 +87,7 @@ class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
 // A rule set is a collection of rules.
 // Each rule in the rule set considers a different case, and renders a decision.
 // If none of the rules render a decision, the vaccine status will be Incomplete.
-abstract class Rules(factors: Factors, rules: List[Rule]) {
+class Rules(factors: Factors, rules: List[Rule]) {
   // Get a rule result for each rule in the list of rules.
   def applyRules(): List[RuleResult] = rules.map(_.applyRule)
   // Summary decision for all the rules.
@@ -104,3 +104,4 @@ abstract class Rules(factors: Factors, rules: List[Rule]) {
   }
   def report(): String = documentedDecision().report
 }
+
