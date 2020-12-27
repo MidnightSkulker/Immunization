@@ -4,15 +4,15 @@ import models.model._
 import org.joda.time.DateTime
 
 // Factors that influence an immunization status.
-abstract class Factors(name: String, numberOfDoses: Int, dob: DateTime) {
+abstract class Factors(name: String, numberOfDoses: Int, dob: DateTime, dose1: DateTime = null, dose2: DateTime = null, recentMonth: Int = 0, ageMonth: Int = 0, description: String = "", history: Function1[String, Boolean] = (x => false)) {
   def name(): String = name
   def numberOfDoses(): Int = numberOfDoses
   def dob(): DateTime = dob
-  def dose1(): DateTime = null
-  def dose2(): DateTime = null
-  def recentMonth(): Int = 0
-  def ageMonth(): Int = 0
-  def description(): String = ""
+  def dose1(): DateTime = dose1
+  def dose2(): DateTime = dose2
+  def recentMonth(): Int = recentMonth
+  def ageMonth(): Int = ageMonth
+  def description(): String = description
   def history(disease: String): Boolean = false
 }
 
@@ -104,4 +104,13 @@ class Rules(factors: Factors, rules: List[Rule]) {
   }
   def report(): String = documentedDecision().report
 }
+
+
+class NumberOfDosesFactors(months: Int, dob: DateTime)
+    extends Factors(numberOfDoses = months,
+      name = "NA",
+      dob = dob,
+      description = s"Age is less than $months")
+
+
 
