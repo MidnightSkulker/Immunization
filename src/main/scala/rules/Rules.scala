@@ -98,7 +98,7 @@ abstract class Rules(factors: Factors, rules: List[Rule]) {
       nonNAResults.size match {
         case 0 => (NA, "No rule matched") // Exactly one rule should match.
         case 1 => (nonNAResults(0).status, nonNAResults(0).description)
-        case 2 => (Error, "More than one rule matched")
+        case default => (Error, "More than one rule matched")
       }
     return new RulesResult(finalStatus, report, factors, results)
   }
