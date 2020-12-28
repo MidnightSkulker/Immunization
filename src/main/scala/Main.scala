@@ -294,7 +294,7 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
           // First dose given after age 13 and second dose given more than 24
           // days after the first dose.
           if (doseIsAfter(firstDose, dob, 13 * 12) && doseAfterDose(firstDose, secondDose, 24)) Complete
-          // Second dose given fewere than 24 days after the first dose and less
+          // Second dose given fewer than 24 days after the first dose and less
           // than two months ago.
           if (doseBeforeDose(firstDose, secondDose, 24) && recently(secondDose, 2)) UpToDate
           // Second dose prior to 12 months of age
