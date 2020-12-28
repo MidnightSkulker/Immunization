@@ -12,7 +12,6 @@ class Factors(vaccineName: String = "NA", numberOfDoses: Int, dob: DateTime, dos
   def dose2(): DateTime = dose2
   def recentMonth(): Int = recentMonth
   def ageMonth(): Int = ageMonth
-  def description(): String = description
   def history(disease: String): Boolean = false
 }
 
@@ -20,21 +19,20 @@ class Factors(vaccineName: String = "NA", numberOfDoses: Int, dob: DateTime, dos
 class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
     extends Factors(numberOfDoses = numberOfDoses,
       vaccineName = "NA",
-      description = s"Child is younger than $ageMonth",
       dob = dob,
       ageMonth = ageMonth) {
 }
 
 class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
   val cond: Function1[Factors, Boolean] = condition
-  def description(): String = factors.description
+  def description(): String = description
   def &&(rb: RuleBit): RuleBit = {
     val combinedDescription = this.description + " and " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
   def ||(rb: RuleBit): RuleBit = {
-    val combinedDescription = factors.description + " or " + rb.description()
+    val combinedDescription = this.description + " or " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
     new RuleBit(combinedDescription, factors, combinedCondition)
   }
@@ -87,10 +85,14 @@ class NumberOfDosesFactors(numberOfDoses: Int, dob: DateTime)
       description = s"Age is less than $numberOfDoses") { }
 
 object TryStuff {
-  val zeroDosesFactors = new NumberOfDosesFactors(numberOfDoses = 0,
-    dob = new DateTime("11/18/2015"))
-  val NumberOfDosesRuleBit = new RuleBit(description = "NA",
-    factors = zeroDosesFactors,
-    condition = f => f.numberOfDoses == 0)
+  def numberOfDosesFactors(n: Int) =
+    new NumberOfDosesFactors(
+      numberOfDoses = n,
+      dob = new DateTime("11/18/2015"))
+  def dosesRuleBit(n: Int) =
+    new RuleBit(
+      description = s"Number of Doses is $n",
+      factors = numberOfDosesFactors(n),
+      condition = f => f.numberOfDoses == n)
 }
 
