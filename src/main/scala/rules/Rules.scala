@@ -85,11 +85,11 @@ class NumberOfDosesFactors(numberOfDoses: Int, dob: DateTime)
       description = s"Age is less than $numberOfDoses") { }
 
 object TryStuff {
-  def numberOfDosesFactors(n: Int) =
+  def numberOfDosesFactors(n: Int): Factors =
     new NumberOfDosesFactors(
       numberOfDoses = n,
       dob = new DateTime("11/18/2015"))
-  def dosesRuleBit(n: Int) =
+  def dosesRuleBit(n: Int): RuleBit =
     new RuleBit(
       description = s"Number of Doses is $n",
       factors = numberOfDosesFactors(n),
