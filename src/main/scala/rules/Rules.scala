@@ -86,7 +86,12 @@ trait SpecificRules {
     new Rule(
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
-      factors => dob.plusMonths(ageMonth).isBefore(DateTime.now()),
-      status
-    )
+      factors => dob.plusMonths(factors.ageMonth).isBefore(DateTime.now()),
+      status)
+  def youngerThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses): Rule =
+    new Rule(
+      s"Child is older than $ageMonth",
+      new Factors(dob = dob, ageMonth = ageMonth),
+      factors => dob.plusMonths(factors.ageMonth).isAfter(DateTime.now()),
+      status)
 }
