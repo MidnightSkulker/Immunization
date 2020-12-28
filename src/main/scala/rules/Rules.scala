@@ -23,40 +23,42 @@ class Factors(
   def history(disease: String): Boolean = false
 }
 
-class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
-  val cond: Function1[Factors, Boolean] = condition
-  def description(): String = description
-  def &&(rb: RuleBit): RuleBit = {
-    val combinedDescription = this.description + " and " + rb.description()
-    def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
-    new RuleBit(combinedDescription, factors, combinedCondition)
-  }
-  def ||(rb: RuleBit): RuleBit = {
-    val combinedDescription = this.description + " or " + rb.description()
-    def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
-    new RuleBit(combinedDescription, factors, combinedCondition)
-  }
-  def !(): RuleBit = {
-    val combinedDescription = "not " + this.description
-    def combinedCondition(f: Factors): Boolean = !this.cond(f)
-    new RuleBit(combinedDescription, factors, combinedCondition)
-  }
-}
-
 case class RuleResult(description: String, factors: Factors, status: VaccineStatuses)
-case class RulesResult(finalStatus: VaccineStatuses, report: String, factors: Factors, results: List[RuleResult])
 
 // A single rule such as
 // "0 doses and child is less than two months old" ==> UpToDate
 //
 // The rule set considers the factors of a rule and renders a decision,
 // where the decision is a Vaccine Status, such as UpToDate.
-class Rule(factors: Factors, ruleBit: RuleBit, status: VaccineStatuses) {
-  def condition(f: Factors): VaccineStatuses =
-    if (ruleBit.cond(factors)) status else NA
-  def applyRule(): RuleResult = new RuleResult(this.description(), factors, condition(factors))
-  def description(): String = ruleBit.description()
+class Rule(
+  description: String,
+  factors: Factors,
+  condition: Function1[Factors, Boolean],
+  status: VaccineStatuses) {
+
+  def cond(f: Factors) = condition(f)
+  def description(): String = description
+  def status(): VaccineStatuses = status
+  def &&(rb: Rule): Rule = {
+    val combinedDescription = this.description + " and " + rb.description()
+    def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
+    new Rule(combinedDescription, factors, combinedCondition, rb.status)
+  }
+  def ||(rb: Rule): Rule = {
+    val combinedDescription = this.description + " or " + rb.description()
+    def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
+    new Rule(combinedDescription, factors, combinedCondition, rb.status)
+  }
+  def !(): Rule = {
+    val combinedDescription = "not " + this.description
+    def combinedCondition(f: Factors): Boolean = !this.cond(f)
+    new Rule(combinedDescription, factors, combinedCondition, this.status)
+  }
+  def condStatus(f: Factors): VaccineStatuses = if (condition(factors)) status else NA
+  def applyRule(): RuleResult = new RuleResult(this.description(), factors, condStatus(factors))
 }
+
+case class RulesResult(finalStatus: VaccineStatuses, report: String, factors: Factors, results: List[RuleResult])
 
 // A rule set is a collection of rules.
 // Each rule in the rule set considers a different case, and renders a decision.
@@ -79,37 +81,7 @@ class Rules(factors: Factors, rules: List[Rule]) {
   def report(): String = documentedDecision().report
 }
 
-class NumberOfDosesFactors(numberOfDoses: Int, dob: DateTime)
-    extends Factors(numberOfDoses = numberOfDoses, dob = dob)
-
-object TryStuff {
-  def numberOfDosesFactors(n: Int): Factors =
-    new NumberOfDosesFactors(
-      numberOfDoses = n,
-      dob = new DateTime("11/18/2015"))
-  def dosesRuleBit(n: Int): RuleBit =
-    new RuleBit(
-      description = s"Number of Doses is $n",
-      factors = numberOfDosesFactors(n),
-      condition = f => f.numberOfDoses == n)
-}
-
-// To be moved to another file later
-class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
-    extends Factors(numberOfDoses = numberOfDoses,
-      vaccineName = "NA",
-      dob = dob,
-      ageMonth = ageMonth) {
-}
-
 trait SpecificRules {
   def olderThanFactors(dob: DateTime, ageMonths: Int): Factors =
     new Factors(dob = dob, ageMonth = ageMonths)
-  def olderThanRuleBit(factors: Factors): RuleBit =
-    new RuleBit(
-      description = s"Child is older than ${factors.ageMonth} months",
-      factors,
-      condition = f => f.dob.plusMonths(f.ageMonth).isBefore(DateTime.now()))
-  def olderThanRule(factors: Factors, status: VaccineStatuses): Rule =
-    new Rule(factors, olderThanRuleBit(factors), status)
 }
