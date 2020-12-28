@@ -4,7 +4,15 @@ import models.model._
 import org.joda.time.DateTime
 
 // Factors that influence an immunization status.
-class Factors(vaccineName: String = "NA", numberOfDoses: Int, dob: DateTime, dose1: DateTime = null, dose2: DateTime = null, recentMonth: Int = 0, ageMonth: Int = 0, description: String = "", history: Function1[String, Boolean] = Function.const(false)) {
+class Factors(
+  vaccineName: String = "NA",
+  numberOfDoses: Int = 0,
+  dob: DateTime,
+  dose1: DateTime = null,
+  dose2: DateTime = null,
+  recentMonth: Int = 0,
+  ageMonth: Int = 0,
+  history: Function1[String, Boolean] = Function.const(false)) {
   def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
   def dob(): DateTime = dob
@@ -13,14 +21,6 @@ class Factors(vaccineName: String = "NA", numberOfDoses: Int, dob: DateTime, dos
   def recentMonth(): Int = recentMonth
   def ageMonth(): Int = ageMonth
   def history(disease: String): Boolean = false
-}
-
-// To be moved to another file later
-class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
-    extends Factors(numberOfDoses = numberOfDoses,
-      vaccineName = "NA",
-      dob = dob,
-      ageMonth = ageMonth) {
 }
 
 class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
@@ -80,9 +80,7 @@ class Rules(factors: Factors, rules: List[Rule]) {
 }
 
 class NumberOfDosesFactors(numberOfDoses: Int, dob: DateTime)
-    extends Factors(numberOfDoses = numberOfDoses,
-      dob = dob,
-      description = s"Age is less than $numberOfDoses") { }
+    extends Factors(numberOfDoses = numberOfDoses, dob = dob)
 
 object TryStuff {
   def numberOfDosesFactors(n: Int): Factors =
@@ -96,3 +94,22 @@ object TryStuff {
       condition = f => f.numberOfDoses == n)
 }
 
+// To be moved to another file later
+class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
+    extends Factors(numberOfDoses = numberOfDoses,
+      vaccineName = "NA",
+      dob = dob,
+      ageMonth = ageMonth) {
+}
+
+trait SpecificRules {
+  def olderThanFactors(dob: DateTime, ageMonths: Int): Factors =
+    new Factors(dob = dob, ageMonth = ageMonths)
+  def olderThanRuleBit(factors: Factors): RuleBit =
+    new RuleBit(
+      description = s"Child is older than ${factors.ageMonth} months",
+      factors,
+      condition = f => f.dob.plusMonths(f.ageMonth).isBefore(DateTime.now()))
+  def olderThanRule(factors: Factors, status: VaccineStatuses): Rule =
+    new Rule(factors, olderThanRuleBit(factors), status)
+}
