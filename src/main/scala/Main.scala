@@ -31,11 +31,6 @@ trait Younger {
 trait Recently {
   def recently(dose: DateTime, numberOfMonths: Int): Boolean =
     DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
-  def recently(dose: Option[DateTime], numberOfMonths: Int): Boolean =
-    dose match {
-      case None => false
-      case Some(dose) => DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
-    }
 }
 
 trait NewBorn {
@@ -61,42 +56,14 @@ class Doses(name: String, dob: DateTime, doses: DateMap)
     withinRange(nth(dose), dob, startMonth, endMonth)
   def doseIsAfter(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
     dose.isAfter(dob.plusMonths(nMonths))
-  def doseIsAfter(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
-    dose match {
-      case None => false
-      case Some(dose) => dose.isAfter(dob.plusMonths(nMonths))
-    }
   def doseIsBefore(dose: DateTime, dob: DateTime, nMonths: Int): Boolean =
     dose.isBefore(dob.plusMonths(nMonths))
-  def doseIsBefore(dose: Option[DateTime], dob: DateTime, nMonths: Int): Boolean =
-    dose match {
-      case None => false
-      case Some(dose) => dose.isBefore(dob.plusMonths(nMonths))
-    }
   // Determine if one dose is after another plus a number of days.
   def doseAfterDose(dose1: DateTime, dose2: DateTime, days: Int): Boolean =
     dose2.isAfter(dose1.plusDays(days))
-  def doseAfterDose(dose1: Option[DateTime], dose2: Option[DateTime], days: Int): Boolean =
-    dose1 match {
-      case None => false
-      case Some(dose1) =>
-        dose2 match {
-          case None => false
-          case Some(dose2) => dose2.isAfter(dose1.plusDays(days))
-        }
-    }
   // Determine if one dose is before another plus a number of days.
   def doseBeforeDose(dose1: DateTime, dose2: DateTime, days: Int): Boolean =
     dose2.isBefore(dose1.plusDays(days))
-  def doseBeforeDose(dose1: Option[DateTime], dose2: Option[DateTime], days: Int): Boolean =
-    dose1 match {
-      case None => false
-      case Some(dose1) =>
-        dose2 match {
-          case None => false
-          case Some(dose2) => dose2.isBefore(dose1.plusDays(days))
-        }
-    }
 }
 
 // Vaccinations
