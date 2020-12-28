@@ -4,8 +4,8 @@ import models.model._
 import org.joda.time.DateTime
 
 // Factors that influence an immunization status.
-abstract class Factors(name: String, numberOfDoses: Int, dob: DateTime, dose1: DateTime = null, dose2: DateTime = null, recentMonth: Int = 0, ageMonth: Int = 0, description: String = "", history: Function1[String, Boolean] = (x => false)) {
-  def name(): String = name
+class Factors(vaccineName: String = "NA", numberOfDoses: Int, dob: DateTime, dose1: DateTime = null, dose2: DateTime = null, recentMonth: Int = 0, ageMonth: Int = 0, description: String = "", history: Function1[String, Boolean] = Function.const(false)) {
+  def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
   def dob(): DateTime = dob
   def dose1(): DateTime = dose1
@@ -16,37 +16,13 @@ abstract class Factors(name: String, numberOfDoses: Int, dob: DateTime, dose1: D
   def history(disease: String): Boolean = false
 }
 
-// A set of factors for a particular decision on the immunization status.
-class FactorSet(numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  dose1: DateTime = null,
-  dose2: DateTime = null,
-  recentMonth: Int = 0,
-  ageMonth: Int = 0,
-  history: Boolean = false) extends Factors(name, numberOfDoses, dob) {
-
-  override def name() = name
-  override def dose1() = dose1
-  override def dose2(): DateTime = dose2
-  override def recentMonth(): Int = recentMonth
-  override def ageMonth(): Int = ageMonth
-  override def description(): String = description
-  override def history(disease: String): Boolean = history
-}
-
 // To be moved to another file later
 class YoungerFactors(numberOfDoses: Int, dob: DateTime, ageMonth: Int)
-    extends FactorSet(numberOfDoses = numberOfDoses,
-      name = "",
-      description = "Child is younger than " + ageMonth + " months",
+    extends Factors(numberOfDoses = numberOfDoses,
+      vaccineName = "NA",
+      description = s"Child is younger than $ageMonth",
       dob = dob,
-      dose1 = null,
-      dose2 = null,
-      recentMonth = 0,
-      ageMonth = ageMonth,
-      history = false) {
+      ageMonth = ageMonth) {
 }
 
 class RuleBit(description: String, factors: Factors, condition: Function1[Factors, Boolean]) {
@@ -105,12 +81,16 @@ class Rules(factors: Factors, rules: List[Rule]) {
   def report(): String = documentedDecision().report
 }
 
-
-class NumberOfDosesFactors(months: Int, dob: DateTime)
-    extends Factors(numberOfDoses = months,
-      name = "NA",
+class NumberOfDosesFactors(numberOfDoses: Int, dob: DateTime)
+    extends Factors(numberOfDoses = numberOfDoses,
       dob = dob,
-      description = s"Age is less than $months")
+      description = s"Age is less than $numberOfDoses") { }
 
-
+object TryStuff {
+  val zeroDosesFactors = new NumberOfDosesFactors(numberOfDoses = 0,
+    dob = new DateTime("11/18/2015"))
+  val NumberOfDosesRuleBit = new RuleBit(description = "NA",
+    factors = zeroDosesFactors,
+    condition = f => f.numberOfDoses == 0)
+}
 
