@@ -82,6 +82,11 @@ class Rules(factors: Factors, rules: List[Rule]) {
 }
 
 trait SpecificRules {
-  def olderThanFactors(dob: DateTime, ageMonths: Int): Factors =
-    new Factors(dob = dob, ageMonth = ageMonths)
+  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses): Rule =
+    new Rule(
+      s"Child is older than $ageMonth",
+      new Factors(dob = dob, ageMonth = ageMonth),
+      factors => dob.plusMonths(ageMonth).isBefore(DateTime.now()),
+      status
+    )
 }
