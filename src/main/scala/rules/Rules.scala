@@ -21,6 +21,22 @@ class Factors(
   def recentMonth(): Int = recentMonth
   def ageMonth(): Int = ageMonth
   def history(disease: String): Boolean = false
+  // Compare two factors, and select the last one that is not null
+  // (if either are not null)
+  def nonNull(x: Int, y: Int): Int = if (y != 0) y else x // 0 is the null value
+  def nonNull(x: String, y: String): String = if (y != null) y else x
+  def nonNull(x: DateTime, y: DateTime): DateTime = if (y != null) y else x
+  def nonNull(x: Function1[String, Boolean], y: Function1[String, Boolean]): Function1[String, Boolean] = if (y != null) y else x
+  // Combine two sets of factors
+  def ++(f2: Factors): Factors = new Factors(
+    nonNull(this.vaccineName, f2.vaccineName),
+    nonNull(this.numberOfDoses, f2.numberOfDoses), // May not need this
+    nonNull(this.dob, f2.dob),
+    nonNull(this.dose1, f2.dose1),
+    nonNull(this.dose2, f2.dose2),
+    nonNull(this.recentMonth, f2.recentMonth),
+    nonNull(this.ageMonth, f2.ageMonth),
+    nonNull(this.history, f2.history))
 }
 
 case class RuleResult(description: String, factors: Factors, status: VaccineStatuses)
@@ -36,18 +52,21 @@ class Rule(
   condition: Function1[Factors, Boolean],
   status: VaccineStatuses) {
 
+  def factors(): Factors = factors
   def cond(f: Factors) = condition(f)
   def description(): String = description
   def status(): VaccineStatuses = status
   def &&(rb: Rule): Rule = {
     val combinedDescription = this.description + " and " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
-    new Rule(combinedDescription, factors, combinedCondition, rb.status)
+    val combinedFactors = this.factors ++ rb.factors
+    new Rule(combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def ||(rb: Rule): Rule = {
     val combinedDescription = this.description + " or " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
-    new Rule(combinedDescription, factors, combinedCondition, rb.status)
+    val combinedFactors = this.factors ++ rb.factors
+    new Rule(combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def !(): Rule = {
     val combinedDescription = "not " + this.description
@@ -58,7 +77,11 @@ class Rule(
   def applyRule(): RuleResult = new RuleResult(this.description(), factors, condStatus(factors))
 }
 
-case class RulesResult(finalStatus: VaccineStatuses, report: String, factors: Factors, results: List[RuleResult])
+case class RulesResult(
+  finalStatus: VaccineStatuses,
+  report: String,
+  factors: Factors,
+  results: List[RuleResult])
 
 // A rule set is a collection of rules.
 // Each rule in the rule set considers a different case, and renders a decision.
