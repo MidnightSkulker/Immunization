@@ -123,4 +123,5 @@ trait SpecificRules {
       new Factors(dose1 = dose, recentMonth = recentMonth),
       factors => DateTime.now().plusMonths(-recentMonth).isBefore(dose),
       status)
+  def newBornRule(dob: DateTime, status: VaccineStatuses): Rule = youngerThanRule(dob, 2, status)
 }
