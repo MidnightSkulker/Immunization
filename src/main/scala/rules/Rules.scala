@@ -12,6 +12,8 @@ class Factors(
   dose2: DateTime = null,
   recentMonth: Int = 0,
   ageMonth: Int = 0,
+  startMonth: Int = 0,
+  endMonth: Int = 0,
   history: Function1[String, Boolean] = Function.const(false)) {
   def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
@@ -20,6 +22,8 @@ class Factors(
   def dose2(): DateTime = dose2
   def recentMonth(): Int = recentMonth
   def ageMonth(): Int = ageMonth
+  def startMonth(): Int = startMonth
+  def endMonth(): Int = endMonth
   def history(disease: String): Boolean = false
   // Compare two factors, and select the last one that is not null
   // (if either are not null)
@@ -36,6 +40,8 @@ class Factors(
     nonNull(this.dose2, f2.dose2),
     nonNull(this.recentMonth, f2.recentMonth),
     nonNull(this.ageMonth, f2.ageMonth),
+    nonNull(this.startMonth, f2.startMonth),
+    nonNull(this.endMonth, f2.endMonth),
     nonNull(this.history, f2.history))
 }
 
@@ -124,4 +130,16 @@ trait SpecificRules {
       factors => DateTime.now().plusMonths(-recentMonth).isBefore(dose),
       status)
   def newBornRule(dob: DateTime, status: VaccineStatuses): Rule = youngerThanRule(dob, 2, status)
+  def withinAgeRangeRule(
+    dob: DateTime,
+    dose: DateTime,
+    startMonth: Int,
+    endMonth: Int,
+    status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given between $startMonth and $endMonth months of age",
+      new Factors(dob = dob, dose1 = dose, startMonth = startMonth, endMonth = endMonth),
+      factors => dose.isAfter(factors.dob.plusMonths(factors.startMonth)) &&
+        (dose.isBefore(factors.dob.plusMonths(factors.endMonth))),
+      status)
 }
