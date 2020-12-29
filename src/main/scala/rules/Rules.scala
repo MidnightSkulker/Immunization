@@ -59,13 +59,13 @@ class Rule(
   def &&(rb: Rule): Rule = {
     val combinedDescription = this.description + " and " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) && rb.cond(f)
-    val combinedFactors = this.factors ++ rb.factors
+    val combinedFactors = this.factors ++ rb.factors // union of the two sets of factors
     new Rule(combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def ||(rb: Rule): Rule = {
     val combinedDescription = this.description + " or " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond(f) || rb.cond(f)
-    val combinedFactors = this.factors ++ rb.factors
+    val combinedFactors = this.factors ++ rb.factors // union of the two sets of factors
     new Rule(combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def !(): Rule = {
