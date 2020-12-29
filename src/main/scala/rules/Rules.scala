@@ -7,7 +7,7 @@ import org.joda.time.DateTime
 class Factors(
   vaccineName: String = "NA",
   numberOfDoses: Int = 0,
-  dob: DateTime,
+  dob: DateTime = null,
   dose1: DateTime = null,
   dose2: DateTime = null,
   recentMonth: Int = 0,
@@ -116,5 +116,11 @@ trait SpecificRules {
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isAfter(DateTime.now()),
+      status)
+  def recentlyRule(dose: DateTime, recentMonth: Int, status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given less than $recentMonth ago",
+      new Factors(dose1 = dose, recentMonth = recentMonth),
+      factors => DateTime.now().plusMonths(-recentMonth).isBefore(dose),
       status)
 }
