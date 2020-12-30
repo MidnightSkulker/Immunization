@@ -62,6 +62,12 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
   val rule22 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
   // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
   val rule23 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
+  // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
+  val rule24 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && !recentlyRule(secondDose, 12, Incomplete)
+  // 2 doses, dose 2 received less than 2 months ago or child is less than 6 months old.
+  val rule25 = doseCountRule(2) && recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+  // 2 doses, dose 2 received more than 2 months ago or child is less than 6 months old.
+  val rule26 = doseCountRule(2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
   override def immunizationStatus (): VaccineStatuses =
   doses.size match {
     case 0 =>
@@ -83,7 +89,7 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
       // Dose 2 received less than 2 months ago or child is less than 6 months old.
       if ((recently(secondDose, 2)) || (youngerThan(dob, 6))) UpToDate
       // Dose 2 received more than 2 months ago and child is less than 6 months old.
-      if ((!recently(secondDose, 2)) && (youngerThan(dob, 6))) UpToDate
+      if ((!recently(secondDose, 2)) && (youngerThan(dob, 6))) Incomplete
       else Incomplete
     case 3 =>
       // Dose received after 7th birthday.
