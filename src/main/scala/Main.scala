@@ -52,69 +52,34 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     with Recently
     with NewBorn
     with SpecificRules {
-  val rule01: Rule = newBornRule(dob, UpToDate)
-  val rule02: Rule = !newBornRule(dob) && doseCountRule(0, Incomplete)
-  // One dose, first dose less than 2 months old or child is less than 4 months of age.
-  val rule11 = doseCountRule(1) && youngerThanRule(dob, 4) && recentlyRule(firstDose, 2, UpToDate)
-  // 2 doses, dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago.
-  val rule21 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
-  // 2 doses, dose 1 received at or after 1st birthday and dose 2 received more than 12 months ago.
-  val rule22 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
-  // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
-  val rule23 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
-  // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
-  val rule24 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && !recentlyRule(secondDose, 12, Incomplete)
-  // 2 doses, dose 2 received less than 2 months ago or child is less than 6 months old.
-  val rule25 = doseCountRule(2) && recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
-  // 2 doses, dose 2 received more than 2 months ago or child is less than 6 months old.
-  val rule26 = doseCountRule(2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
-  val rules: Rules = new Rules(
-    rules = List(rule01, rule02, rule11, rule21, rule22, rule23, rule24, rule25, rule26))
-  val decision: RulesResult = rules.documentedDecision()
-  override def immunizationStatus (): VaccineStatuses =
-  doses.size match {
-    case 0 =>
-      if (isNewBorn(dob)) UpToDate
-      else Incomplete
-    case 1 =>
-      // Less than 2 months old or child is less than 4 months of age.
-      if ((youngerThan(dob, 4)) || (recently(firstDose, 2))) UpToDate
-      else Incomplete
-    case 2 =>
-      // Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago.
-      if ((doseIsAfter(firstDose, dob, 12)) && (recently(secondDose, 12))) UpToDate
-      // Dose 1 received at or after 1st birthday and dose 2 received more than 12 months ago.
-      if ((doseIsAfter(firstDose, dob, 12)) && (!recently(secondDose, 12))) Incomplete
-      // Child is 7 years or older and dose 2 received less than 12 months ago.
-      if (((DateTime.now).isAfter(dob.plusMonths(84))) && (recently(secondDose, 12))) UpToDate
-      // Child is 7 years or older and dose 2 received more than 12 months ago.
-      if ((DateTime.now).isAfter(dob.plusMonths(84)) && (!recently(secondDose, 12))) Incomplete
-      // Dose 2 received less than 2 months ago or child is less than 6 months old.
-      if ((recently(secondDose, 2)) || (youngerThan(dob, 6))) UpToDate
-      // Dose 2 received more than 2 months ago and child is less than 6 months old.
-      if ((!recently(secondDose, 2)) && (youngerThan(dob, 6))) Incomplete
-      else Incomplete
-    case 3 =>
-      // Dose received after 7th birthday.
-      if (doseIsAfter(thirdDose, dob, 84)) Complete
-      // Dose 3 received less than 12 months ago.
-      if (recently(thirdDose, 12)) UpToDate
-      // Dose 1 received at or after 1st birthday and child is less than 4 years old.
-      if (doseIsAfter(firstDose, dob, 12) && youngerThan(dob, 48)) UpToDate
-      // Child is less than 18 months old.
-      if (youngerThan(dob, 18)) UpToDate
-      // Dose 3 recceived 12 months or more ago and child is 18 months old or older.
-      else Incomplete
-    case 4 =>
-      // Dose 4 was given at or after 4th Birthday
-      if (doseIsAfter(fourthDose, dob, 48)) Complete
-      // Dose 4 was before 4th Birthday and child is less than Kindergarten age (5).
-      if (doseIsBefore(fourthDose, dob, 48) && youngerThan(dob, 60)) UpToDate
-      // Dose 4 was received before 4th birthday and child is kindergarten of higher grade.
-      else Incomplete
-    case 5 =>
-      Complete
-    case default => Error
+  override def immunizationStatus (): VaccineStatuses = {
+    val rule01: Rule = newBornRule(dob, UpToDate)
+    val rule02: Rule = !newBornRule(dob) && doseCountRule(0, Incomplete)
+    // One dose, first dose less than 2 months old or
+    // child is less than 4 months of age.
+    val rule11 =
+      doseCountRule(1) && youngerThanRule(dob, 4) && recentlyRule(firstDose, 2, UpToDate)
+    // 2 doses, dose 1 received at or after 1st birthday and
+    // dose 2 received less than 12 months ago.
+    val rule21 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
+    // 2 doses, dose 1 received at or after 1st birthday and
+    // dose 2 received more than 12 months ago.
+    val rule22 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
+    // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
+    val rule23 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
+    // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
+    val rule24 = doseCountRule(2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && !recentlyRule(secondDose, 12, Incomplete)
+    // 2 doses, dose 2 received less than 2 months ago or
+    // child is less than 6 months old.
+    val rule25 = doseCountRule(2) && recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+    // 2 doses, dose 2 received more than 2 months ago or
+    // child is less than 6 months old.
+    val rule26 = doseCountRule(2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+    val rules: Rules = new Rules(
+      rules = List(rule01, rule02, rule11, rule21, rule22, rule23, rule24, rule25, rule26))
+    val decision: RulesResult = rules.documentedDecision()
+    val report: String = rules.report()
+    return decision.finalStatus
   }
 }
 
