@@ -53,10 +53,11 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     with NewBorn
     with SpecificRules {
   val rule01: Rule = newBornRule(dob, UpToDate)
-  val rule02: Rule = !newBornRule(dob, NA) && doseCountRule(0, Incomplete)
+  val rule02: Rule = !newBornRule(dob) && doseCountRule(0, Incomplete)
   // One dose, first dose less than 2 months old or child is less than 4 months of age.
-  val rule11 = doseCountRule(1, NA) && youngerThanRule(dob, 4, NA) && recentlyRule(firstDose, 2, UpToDate)
-
+  val rule11 = doseCountRule(1) && youngerThanRule(dob, 4) && recentlyRule(firstDose, 2, UpToDate)
+  // 2 Doses, Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago.
+  val rule21 = doseCountRule(2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
   override def immunizationStatus (): VaccineStatuses =
   doses.size match {
     case 0 =>
@@ -68,7 +69,7 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
       else Incomplete
     case 2 =>
       // Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago.
-      if ((doseIsAfter(secondDose, dob, 12)) && (recently(secondDose, 12))) UpToDate
+      if ((doseIsAfter(firstDose, dob, 12)) && (recently(secondDose, 12))) UpToDate
       // Dose 1 received at or after 1st birthday and dose 2 received more than 12 months ago.
       if ((doseIsAfter(secondDose, dob, 12)) && (!recently(secondDose, 12))) Incomplete
       // Child is 7 years or older and dose 2 received less than 12 months ago.

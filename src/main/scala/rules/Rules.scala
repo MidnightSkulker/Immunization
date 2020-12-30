@@ -114,13 +114,13 @@ class Rules(factors: Factors, rules: List[Rule]) {
 }
 
 trait SpecificRules {
-  def doseCountRule(numberOfDoses: Int, status: VaccineStatuses): Rule =
+  def doseCountRule(numberOfDoses: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Number of doses is $numberOfDoses",
       new Factors(numberOfDoses = numberOfDoses),
       factors => factors.numberOfDoses == numberOfDoses,
       status)
-  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses): Rule =
+  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
@@ -129,13 +129,13 @@ trait SpecificRules {
   def youngerThanRule(
     dob: DateTime,
     ageMonth: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isAfter(DateTime.now()),
       status)
-  def recentlyRule(dose: DateTime, recentMonth: Int, status: VaccineStatuses): Rule =
+  def recentlyRule(dose: DateTime, recentMonth: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given less than $recentMonth ago",
       new Factors(dose1 = dose, recentMonth = recentMonth),
@@ -143,13 +143,13 @@ trait SpecificRules {
       status)
   def newBornRule(
     dob: DateTime,
-    status: VaccineStatuses): Rule = youngerThanRule(dob, 2, status)
+    status: VaccineStatuses = NA): Rule = youngerThanRule(dob, 2, status)
   def withinAgeRangeRule(
     dob: DateTime,
     dose: DateTime,
     startMonth: Int,
     endMonth: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given between $startMonth and $endMonth months of age",
       new Factors(dob = dob, dose1 = dose, startMonth = startMonth, endMonth = endMonth),
@@ -160,7 +160,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: DateTime,
     ageMonth: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given after age $ageMonth months of age",
       new Factors(dob = dob, dose1 = dose, ageMonth = ageMonth),
@@ -170,7 +170,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: DateTime,
     ageMonth: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given before age $ageMonth months of age",
       new Factors(dob = dob, dose1 = dose, ageMonth = ageMonth),
@@ -180,7 +180,7 @@ trait SpecificRules {
     dose1: DateTime,
     dose2: DateTime,
     days: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given $days after another dose",
       new Factors(dose1 = dose1, dose2 = dose2, days = days),
@@ -190,7 +190,7 @@ trait SpecificRules {
     dose1: DateTime,
     dose2: DateTime,
     days: Int,
-    status: VaccineStatuses): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       s"Dose is given $days before another dose",
       new Factors(dose1 = dose1, dose2 = dose2, days = days),
