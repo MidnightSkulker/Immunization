@@ -14,6 +14,7 @@ class Factors(
   ageMonth: Int = 0,
   startMonth: Int = 0,
   endMonth: Int = 0,
+  days: Int = 0,
   history: Function1[String, Boolean] = Function.const(false)) {
   def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
@@ -24,6 +25,7 @@ class Factors(
   def ageMonth(): Int = ageMonth
   def startMonth(): Int = startMonth
   def endMonth(): Int = endMonth
+  def days(): Int = days
   def history(disease: String): Boolean = false
   // Compare two factors, and select the last one that is not null
   // (if either are not null)
@@ -42,6 +44,7 @@ class Factors(
     nonNull(this.ageMonth, f2.ageMonth),
     nonNull(this.startMonth, f2.startMonth),
     nonNull(this.endMonth, f2.endMonth),
+    nonNull(this.days, f2.days),
     nonNull(this.history, f2.history))
 }
 
@@ -141,5 +144,45 @@ trait SpecificRules {
       new Factors(dob = dob, dose1 = dose, startMonth = startMonth, endMonth = endMonth),
       factors => dose.isAfter(factors.dob.plusMonths(factors.startMonth)) &&
         (dose.isBefore(factors.dob.plusMonths(factors.endMonth))),
+      status)
+  def doseAfterRule(
+    dob: DateTime,
+    dose: DateTime,
+    ageMonth: Int,
+    status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given after age $ageMonth months of age",
+      new Factors(dob = dob, dose1 = dose, ageMonth = ageMonth),
+      factors => dose.isAfter(dob.plusMonths(factors.ageMonth)),
+      status)
+  def doseBeforeRule(
+    dob: DateTime,
+    dose: DateTime,
+    ageMonth: Int,
+    status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given before age $ageMonth months of age",
+      new Factors(dob = dob, dose1 = dose, ageMonth = ageMonth),
+      factors => dose.isBefore(dob.plusMonths(factors.ageMonth)),
+      status)
+  def doseAfterDose(
+    dose1: DateTime,
+    dose2: DateTime,
+    days: Int,
+    status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given $days after another dose",
+      new Factors(dose1 = dose1, dose2 = dose2, days = days),
+      factors => dose2.isAfter(dose1.plusDays(days)),
+      status)
+  def doseBeforeDose(
+    dose1: DateTime,
+    dose2: DateTime,
+    days: Int,
+    status: VaccineStatuses): Rule =
+    new Rule(
+      s"Dose is given $days before another dose",
+      new Factors(dose1 = dose1, dose2 = dose2, days = days),
+      factors => dose2.isBefore(dose1.plusDays(days)),
       status)
 }
