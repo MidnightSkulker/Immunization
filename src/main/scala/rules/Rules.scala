@@ -77,7 +77,7 @@ class Rule(
     val combinedFactors = this.factors ++ rb.factors // union of the two sets of factors
     new Rule(combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
-  def !(): Rule = {
+  def unary_!(): Rule = {
     val combinedDescription = "not " + this.description
     def combinedCondition(f: Factors): Boolean = !this.cond(f)
     new Rule(combinedDescription, factors, combinedCondition, this.status)
@@ -114,13 +114,22 @@ class Rules(factors: Factors, rules: List[Rule]) {
 }
 
 trait SpecificRules {
+  def doseCountRule(numberOfDoses: Int, status: VaccineStatuses): Rule =
+    new Rule(
+      s"Number of doses is $numberOfDoses",
+      new Factors(numberOfDoses = numberOfDoses),
+      factors => factors.numberOfDoses == numberOfDoses,
+      status)
   def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses): Rule =
     new Rule(
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isBefore(DateTime.now()),
       status)
-  def youngerThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses): Rule =
+  def youngerThanRule(
+    dob: DateTime,
+    ageMonth: Int,
+    status: VaccineStatuses): Rule =
     new Rule(
       s"Child is older than $ageMonth",
       new Factors(dob = dob, ageMonth = ageMonth),
@@ -132,7 +141,9 @@ trait SpecificRules {
       new Factors(dose1 = dose, recentMonth = recentMonth),
       factors => DateTime.now().plusMonths(-recentMonth).isBefore(dose),
       status)
-  def newBornRule(dob: DateTime, status: VaccineStatuses): Rule = youngerThanRule(dob, 2, status)
+  def newBornRule(
+    dob: DateTime,
+    status: VaccineStatuses): Rule = youngerThanRule(dob, 2, status)
   def withinAgeRangeRule(
     dob: DateTime,
     dose: DateTime,

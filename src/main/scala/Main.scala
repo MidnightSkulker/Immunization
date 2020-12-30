@@ -78,47 +78,17 @@ class NewBornRule(numberOfDoses: Int,
     else (reportString, NA)
 }
 
-// Rules that require if a child is younger than some age, and the
-// dose in question is relatively recent.
-class YoungerAndRecent(numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  dose: DateTime,
-  month: Int,
-  status: VaccineStatuses)
-    extends GeneralRule (numberOfDoses, name, description, dob, dose, null, month, NA)
-    with Younger
-    with Recently {
-  override def rule () =
-    if ((youngerThan(dob, month)) || (recently(dose, month))) (reportString, UpToDate)
-    else (reportString, NA)
-}
-
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
 class DTAP (name: String, dob: DateTime, doses: DateMap)
     extends Vaccine("dtap", dob, doses, 5)
     with Younger
     with Recently
-    with NewBorn {
-  val rule01 = new NewBornRule(numberOfDoses = 0,
-    name,
-    description = "0 doses and child is less than two months old",
-    dob = dob,
-    status = UpToDate)
-  val rule02 = new NewBornRule(numberOfDoses = 0,
-    name,
-    description = "0 doses and child is more than two months old",
-    dob,
-    status = Incomplete)
-  val rule11 = new YoungerAndRecent(numberOfDoses = 1,
-    name,
-    description = "Dose 1 received at or after 1st birthday and dose 2 received less than 12 months ago",
-    dob,
-    dose = firstDose,
-    month = 4, // **** Need two month params.
-    status = UpToDate)
+    with NewBorn
+    with SpecificRules {
+  val rule01: Rule = newBornRule(dob, UpToDate)
+  val rule02: Rule = !newBornRule(dob, NA) && doseCountRule(0, Incomplete)
+  val rule11 = youngerThanRule(dob, 4, NA) && recentlyRule(firstDose, 2, UpToDate)
 
   override def immunizationStatus (): VaccineStatuses =
   doses.size match {
