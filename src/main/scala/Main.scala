@@ -44,40 +44,6 @@ abstract class Vaccine(name: String,
   def immunizationStatus (): VaccineStatuses = NA
 }
 
-abstract class GeneralRule (numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  dose1: DateTime,
-  dose2: DateTime,
-  months: Int,
-  status: VaccineStatuses) {
-    // extends DOBRule(numberOfDoses, name, description, dob, status) {
-  def rule(): (String, VaccineStatuses) = (reportString, NA)
-  def reportString = name + ": status for rule (" + numberOfDoses + " doses) / " +
-                     description + " / is " + status
-}
-
-abstract class DOBRule (numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  status: VaccineStatuses)
-    extends GeneralRule(numberOfDoses, name, description, dob, null, null, 0, NA) {
-}
-
-// Rules that require that a child is newly born.
-class NewBornRule(numberOfDoses: Int,
-  name: String,
-  description: String,
-  dob: DateTime,
-  status: VaccineStatuses)
-    extends DOBRule(numberOfDoses, name, description, dob, status) with NewBorn {
-  override def rule () =
-    if (isNewBorn(dob)) (reportString, UpToDate)
-    else (reportString, NA)
-}
-
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
 class DTAP (name: String, dob: DateTime, doses: DateMap)
