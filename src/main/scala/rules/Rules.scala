@@ -16,6 +16,7 @@ class Factors(
   endMonth: Int = 0,
   days: Int = 0,
   history: Function1[String, Boolean] = Function.const(false)) {
+  def nullFactors(): Factors = new Factors() // Null collection of factors (default all constructors).
   def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
   def dob(): DateTime = dob
@@ -33,7 +34,7 @@ class Factors(
   def nonNull(x: String, y: String): String = if (y != null) y else x
   def nonNull(x: DateTime, y: DateTime): DateTime = if (y != null) y else x
   def nonNull(x: Function1[String, Boolean], y: Function1[String, Boolean]): Function1[String, Boolean] = if (y != null) y else x
-  // Combine two sets of factors
+  // Combine two sets of factors (union)
   def ++(f2: Factors): Factors = new Factors(
     nonNull(this.vaccineName, f2.vaccineName),
     nonNull(this.numberOfDoses, f2.numberOfDoses), // May not need this
@@ -95,7 +96,10 @@ case class RulesResult(
 // A rule set is a collection of rules.
 // Each rule in the rule set considers a different case, and renders a decision.
 // If none of the rules render a decision, the vaccine status will be Incomplete.
-class Rules(factors: Factors, rules: List[Rule]) {
+class Rules(rules: List[Rule]) {
+  // Combine the sets of factors from a list of rules into a single set of factors
+  def listFactors(): Factors =
+    rules.foldLeft (new Factors()) {(acc, r) => acc ++ r.factors()}
   // Get a rule result for each rule in the list of rules.
   def applyRules(): List[RuleResult] = rules.map(_.applyRule)
   // Summary decision for all the rules.
@@ -108,7 +112,7 @@ class Rules(factors: Factors, rules: List[Rule]) {
         case 1 => (nonNAResults(0).status, nonNAResults(0).description)
         case default => (Error, "More than one rule matched")
       }
-    return new RulesResult(finalStatus, report, factors, results)
+    return new RulesResult(finalStatus, report, this.listFactors(), results)
   }
   def report(): String = documentedDecision().report
 }
