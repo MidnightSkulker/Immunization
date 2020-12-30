@@ -54,7 +54,8 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     with SpecificRules {
   val rule01: Rule = newBornRule(dob, UpToDate)
   val rule02: Rule = !newBornRule(dob, NA) && doseCountRule(0, Incomplete)
-  val rule11 = youngerThanRule(dob, 4, NA) && recentlyRule(firstDose, 2, UpToDate)
+  // One dose, first dose less than 2 months old or child is less than 4 months of age.
+  val rule11 = doseCountRule(1, NA) && youngerThanRule(dob, 4, NA) && recentlyRule(firstDose, 2, UpToDate)
 
   override def immunizationStatus (): VaccineStatuses =
   doses.size match {
