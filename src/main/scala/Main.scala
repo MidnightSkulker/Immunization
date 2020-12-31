@@ -75,8 +75,28 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     // 2 doses, dose 2 received more than 2 months ago or
     // child is less than 6 months old.
     val rule26 = doseCountRule(2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+    // 3 doses, third dose received after 7th birthday.
+    val rule31 = doseCountRule(3) && doseAfterRule(dob, thirdDose, 84, Complete)
+    // 3 doses, third dose received less than 12 months ago.
+    val rule32 = doseCountRule(3) && recentlyRule(thirdDose, 12, UpToDate)
+    // 3 doses, first does received at or after 1st birthday and child is less than 4 years old.
+    val rule33 = doseCountRule(3) && doseAfterRule(dob, firstDose, 12) && youngerThanRule(dob, 48, UpToDate)
+    // 3 doses, child is less than 18 months old.
+    val rule34 = doseCountRule(3) && youngerThanRule(dob, 18, UpToDate)
+    // 3 doses, third dose recceived 12 months or more ago and child is 18 months old or older.
+    val rule35 = doseCountRule(3) && (!recentlyRule(thirdDose, 12) || olderThanRule(dob, 18, Incomplete))
+    // 4 doses, fourth Dose was given at or after 4th Birthday
+    val rule41 = doseCountRule(4) && doseAfterRule(dob, firstDose, 48, Complete)
+    // 4 doses, fourth dose was before 4th Birthday and child is less than Kindergarten age (5).
+    val rule42 = doseCountRule(4) && doseBeforeRule(dob, fourthDose, 48) && youngerThanRule(dob, 60, UpToDate)
+    // 4 doses, fourth dose was received before 4th birthday and
+    // child is kindergarten of higher grade.
+    val rule43 = doseCountRule(4) && doseBeforeRule(dob, fourthDose, 48) && olderThanRule(dob, 60, Incomplete)
+    val rule51 = doseCountRule(5, Complete)
+
     val rules: Rules = new Rules(
-      rules = List(rule01, rule02, rule11, rule21, rule22, rule23, rule24, rule25, rule26))
+      rules = List(rule01, rule02, rule11, rule21, rule22, rule23, rule24, rule25, rule26,
+                   rule31, rule32, rule33, rule34, rule35, rule41, rule42, rule43, rule51))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
     return decision.finalStatus
