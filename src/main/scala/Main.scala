@@ -28,11 +28,6 @@ trait Recently {
     DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
 }
 
-trait NewBorn {
-  // Determine if the child is newly born.
-  def isNewBorn (dob: DateTime): Boolean = dob.plusMonths(2).isAfter(DateTime.now())
-}
-
 // Vaccinations
 // Example names: DTAP, with maximum of 5 shots (vaccinations).
 //                Polio, with maximum of 5 shots (vaccinations).
