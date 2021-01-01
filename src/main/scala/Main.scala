@@ -314,46 +314,42 @@ class HEPA (dob: DateTime, doses: DateMap)
 
 // Vaccination status rules for HEPB (Hepatitis B)
 class HEPB (dob: DateTime, doses: DateMap)
-    extends Vaccine("hepB", dob, doses, 3)
-    with Younger
-    with Older
-    with Recently {
-  override def immunizationStatus (): VaccineStatuses =
-    doses.size match {
-      case 0 =>
-        // Child is under 2 months old.
-        if (youngerThan(dob, 2)) UpToDate
-        // Child is 2 months old or older.
-        else Incomplete
-      case 1 =>
-        // Received at or after 11 years old and less than 6 months ago.
-        if (olderThan(dob, 11 * 12) && recently(firstDose, 6)) UpToDate
-        // Received at or after 11 years of age and 6 months or more ago.
-        if (olderThan(dob, 11 * 12) && !recently(firstDose, 6)) Incomplete
-        // Received before 11 years of age and less than 2 months ago or
-        // child is less than 4 months old.
-        if ((doseIsBefore(firstDose, dob, 11 * 12) &&
-             recently(firstDose, 2)) || youngerThan(dob, 4)) UpToDate
-        // Received before 11 years of age and more than 2 months ago
-        // and child is 4 months old or older.
-        if ((doseIsBefore(firstDose, dob, 11 * 12) &&
-            !recently(firstDose, 2)) &&
-            olderThan(dob, 4)) Incomplete
-        else Incomplete
-      case 2 =>
-        // First dose received at or after 11 years old and second dose
-        // received at least 4 months after first does.
-        if (doseIsBefore(firstDose, dob, 11 * 12) && doseAfterDose(firstDose, secondDose, 4)) Complete
-        // First dose is received at or after 18 years old.
-        if (doseIsAfter(firstDose, dob, 18 * 12)) Complete
-        // Second dose received less that 5 months ago
-        if (recently(secondDose, 5)) UpToDate
-        // Received 5 months or more ago and child is less than 18 months old.
-        if (!recently(secondDose, 5) && youngerThan(dob, 18)) UpToDate
-        // Received 5 months or more ago and child is more than 18 months old.
-        else Incomplete
-      case 3 => Complete
-      case 4 => Complete
+    extends Vaccine("hepB", dob, doses, 3) with SpecificRules {
+  override def immunizationStatus (): VaccineStatuses = {
+    // 0 doses, child is under 2 months old.
+    val rule01: Rule = doseCountRule(0) && youngerThanRule(dob, 2, UpToDate)
+    // 0 doses, child is over 2 months old.
+    val rule02: Rule = doseCountRule(0) && !youngerThanRule(dob, 2, Incomplete)
+    // 1 dose, first dose at or after 11 years old and less than 6 months ago.
+    val rule11: Rule = doseCountRule(1) && olderThanRule(dob, 11 * 12) && recentlyRule(firstDose, 6, UpToDate)
+    // 1 dose, first does at or after 11 years of age and 6 months or more ago.
+    val rule12: Rule = doseCountRule(1) && olderThanRule(dob, 11 * 12) && !recentlyRule(firstDose, 6, Incomplete)
+    // 1 dose, before 11 years of age and less than 2 months ago or
+    // child is less than 4 months old.
+    val rule13: Rule = doseCountRule(1) && doseBeforeRule(firstDose, dob, 11 * 12) &&
+             recentlyRule(firstDose, 2) || youngerThanRule(dob, 4, UpToDate)
+    // 1 dose, received before 11 years of age and more than 2 months ago
+    // and child is 4 months old or older.
+    val rule14: Rule = doseCountRule(1) && doseBeforeRule(firstDose, dob, 11 * 12) && !recentlyRule(firstDose, 2) && olderThanRule(dob, 4, Incomplete)
+    val rule15: Rule = doseCountRule(1, Incomplete)
+    // 2 doses, first dose received at or after 11 years old and second dose
+    // received at least 4 months after first does.
+    val rule21: Rule = doseCountRule(2) && doseBeforeRule(firstDose, dob, 11 * 12) && doseAfterDoseRule(firstDose, secondDose, 4, Complete)
+    // 2 doses, first dose is received at or after 18 years old.
+    val rule22: Rule = doseCountRule(2) && doseAfterRule(firstDose, dob, 18 * 12, Complete)
+    // 2 doses, second dose received less that 5 months ago
+    val rule23: Rule = doseCountRule(2) && recentlyRule(secondDose, 5, UpToDate)
+    // 2 doses, second dose after 5 months or more ago and child is less than 18 months old.
+    val rule24: Rule = doseCountRule(2) && !recentlyRule(secondDose, 5) && youngerThanRule(dob, 18, UpToDate)
+    val rule25: Rule = doseCountRule(2, Incomplete) // else
+    val rule31: Rule = doseCountRule(3, Complete)
+    val rule41: Rule = doseCountRule(4, Complete)
+    val rules: Rules = new Rules(
+      rules = List(rule01, rule02, rule11, rule12, rule13, rule14, rule15,
+        rule21, rule22, rule23, rule24, rule25, rule31, rule41))
+    val decision: RulesResult = rules.documentedDecision()
+    val report: String = rules.report()
+    return decision.finalStatus
     }
 }
 
