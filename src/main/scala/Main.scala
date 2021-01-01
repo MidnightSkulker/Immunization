@@ -13,11 +13,6 @@ import json._
 import rules._
 import doses._
 
-trait Older {
-  def olderThan(dob: DateTime, numberOfMonths: Int): Boolean =
-    dob.plusMonths(numberOfMonths).isBefore(DateTime.now())
-}
-
 trait Younger {
   def youngerThan(dob: DateTime, numberOfMonths: Int): Boolean =
     dob.plusMonths(numberOfMonths).isAfter(DateTime.now())
