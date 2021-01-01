@@ -15,9 +15,9 @@ class Factors(
   startMonth: Int = 0,
   endMonth: Int = 0,
   days: Int = 0,
-  history: Function1[String, Boolean] = Function.const(false)) {
+  history: List[String] = List()) {
   def nullFactors(): Factors = new Factors() // Null collection of factors (default all constructors).
-  def vaccineName(): String = vaccineName
+    def vaccineName(): String = vaccineName
   def numberOfDoses(): Int = numberOfDoses
   def dob(): DateTime = dob
   def dose1(): DateTime = dose1
@@ -27,13 +27,13 @@ class Factors(
   def startMonth(): Int = startMonth
   def endMonth(): Int = endMonth
   def days(): Int = days
-  def history(disease: String): Boolean = false
+  def history(): List[String] = history
   // Compare two factors, and select the last one that is not null
   // (if either are not null)
   def nonNull(x: Int, y: Int): Int = if (y != 0) y else x // 0 is the null value
   def nonNull(x: String, y: String): String = if (y != null) y else x
   def nonNull(x: DateTime, y: DateTime): DateTime = if (y != null) y else x
-  def nonNull(x: Function1[String, Boolean], y: Function1[String, Boolean]): Function1[String, Boolean] = if (y != null) y else x
+  def nonNull(x: List[String], y: List[String]) = if (y != null) y else x
   // Combine two sets of factors (union)
   def ++(f2: Factors): Factors = new Factors(
     nonNull(this.vaccineName, f2.vaccineName),
@@ -47,7 +47,7 @@ class Factors(
     nonNull(this.endMonth, f2.endMonth),
     nonNull(this.days, f2.days),
     nonNull(this.history, f2.history))
-}
+  }
 
 case class RuleResult(description: String, factors: Factors, status: VaccineStatuses)
 
@@ -180,7 +180,7 @@ trait SpecificRules {
       new Factors(dob = dob, dose1 = dose, ageMonth = ageMonth),
       factors => dose.isBefore(dob.plusMonths(factors.ageMonth)),
       status)
-  def doseAfterDose(
+  def doseAfterDoseRule(
     dose1: DateTime,
     dose2: DateTime,
     days: Int,
@@ -190,7 +190,7 @@ trait SpecificRules {
       new Factors(dose1 = dose1, dose2 = dose2, days = days),
       factors => dose2.isAfter(dose1.plusDays(days)),
       status)
-  def doseBeforeDose(
+  def doseBeforeDoseRule(
     dose1: DateTime,
     dose2: DateTime,
     days: Int,
@@ -200,4 +200,14 @@ trait SpecificRules {
       new Factors(dose1 = dose1, dose2 = dose2, days = days),
       factors => dose2.isBefore(dose1.plusDays(days)),
       status)
+  def diseaseHistoryRule(
+    disease: String,
+    diseaseHistory: List[String],
+    status: VaccineStatuses = NA): Rule =
+    new Rule(
+      s"Is $disease in disease history",
+      new Factors(history = diseaseHistory),
+      factors => factors.history contains disease,
+      status)
+
 }

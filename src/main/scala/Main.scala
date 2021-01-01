@@ -195,46 +195,40 @@ class Polio (dob: DateTime, doses: DateMap)
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
-    extends Vaccine("varicella", dob, doses, 2)
-    with Younger
-    with Older
-    with Recently {
-  override def immunizationStatus (): VaccineStatuses =
-    if (diseaseHistory contains "Chicken Pox") Complete
-    else
-      doses.size match {
-        case 0 =>
-          // No received and child is less than 18 months old.
-          if (youngerThan(dob, 18)) UpToDate
-          else Incomplete
-        case 1 =>
-          // First dose is after age 12 months
-          if (doseIsAfter(firstDose, dob, 12)) Complete
-          // Received before 12 months of age and child is less than 18 months old.
-          if (doseIsBefore(firstDose, dob, 12) && youngerThan(dob, 18)) UpToDate
-          // Received before 12 months of age and child is more than 18 months old.
-          if (doseIsBefore(firstDose, dob, 12) && olderThan(dob, 18)) Incomplete
-          // Received at or after 13 years of age and less than two months ago.
-          if (olderThan(dob, 13 * 12) && recently(firstDose, 2)) UpToDate
-          // Received at or after 13 years of age and less than two months ago.
-          if (olderThan(dob, 13 * 12) && !recently(firstDose, 2)) Incomplete
-          else Incomplete
-        case 2 =>
-          // At least one dose given between 12 months of age and 12 years of age
-          if (doseIsAfter(firstDose, dob, 12) && doseIsBefore(firstDose, dob, 12 * 12)) Complete
-          if (doseIsAfter(secondDose, dob, 12) && doseIsBefore(secondDose, dob, 12 * 12)) Complete
-          // First dose given after age 13 and second dose given more than 24
-          // days after the first dose.
-          if (doseIsAfter(firstDose, dob, 13 * 12) && doseAfterDose(firstDose, secondDose, 24)) Complete
-          // Second dose given fewer than 24 days after the first dose and less
-          // than two months ago.
-          if (doseBeforeDose(firstDose, secondDose, 24) && recently(secondDose, 2)) UpToDate
-          // Second dose prior to 12 months of age
-          if (doseIsBefore(secondDose, dob, 12) && olderThan(dob, 12)) Incomplete
-          else Incomplete
-        case 3 => Complete
-        case default => Error
-      }
+    extends Vaccine("varicella", dob, doses, 2) with SpecificRules {
+  override def immunizationStatus (): VaccineStatuses = {
+    val ruleChickenPox = diseaseHistoryRule("Chicken Pox", diseaseHistory, Complete)
+    // 0 doses, child is less than 18 months old.
+    val rule01: Rule = doseCountRule(0) && youngerThanRule(dob, 18, UpToDate)
+    val rule02: Rule = doseCountRule(0) && !youngerThanRule(dob, 18, Incomplete)
+    // First dose is after age 12 months
+    val rule11: Rule = doseCountRule(1) && doseAfterRule(firstDose, dob, 12, Complete)
+    // 1 dose, received before 12 months of age and child is less than 18 months old.
+    val rule12: Rule = doseCountRule(1) && doseBeforeRule(firstDose, dob, 12) && youngerThanRule(dob, 18, UpToDate)
+    // 1 dose, first dose before 12 months of age and child is more than 18 months old.
+    val rule13: Rule = doseCountRule(1) && doseBeforeRule(firstDose, dob, 12) && olderThanRule(dob, 18, Incomplete)
+    // 1 dose, first dose at or after 13 years of age and less than two months ago.
+    val rule14: Rule = doseCountRule(1) && olderThanRule(dob, 13 * 12) && recentlyRule(firstDose, 2, UpToDate)
+    // 1 dose, first dose at or after 13 years of age and less than two months ago.
+    val rule15: Rule = doseCountRule(1) && olderThanRule(dob, 13 * 12) && !recentlyRule(firstDose, 2, Incomplete)
+    val rule16: Rule = doseCountRule(1, Incomplete)
+    // 2 doses, At least one dose given between 12 months of age and 12 years of age
+    val rule21: Rule = doseCountRule(2) && doseAfterRule(firstDose, dob, 12) && doseBeforeRule(firstDose, dob, 12 * 12, Complete)
+    // 2 doses, First dose given after age 13 and second dose given more than 24
+    // days after the first dose.
+    val rule22: Rule = doseCountRule(2) && doseAfterRule(firstDose, dob, 13 * 12) && doseAfterDoseRule(firstDose, secondDose, 24, Complete)
+    // 2 doses, Second dose given fewer than 24 days after the first dose and less
+    val rule23: Rule =  doseCountRule(2) && doseBeforeDoseRule(firstDose, secondDose, 24) && recentlyRule(secondDose, 2, UpToDate)
+    // 2 doses Second dose prior to 12 months of age
+    val rule24: Rule = doseCountRule(2) && doseBeforeRule(secondDose, dob, 12) && olderThanRule(dob, 12, Incomplete)
+    val rule31: Rule = doseCountRule(Complete)
+    val rules: Rules = new Rules(
+      rules = List(ruleChickenPox, rule01, rule02, rule11, rule12, rule13, rule14, rule15,
+        rule21, rule22, rule23, rule24, rule31))
+    val decision: RulesResult = rules.documentedDecision()
+    val report: String = rules.report()
+    return decision.finalStatus
+  }
 }
 
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
