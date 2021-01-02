@@ -13,16 +13,6 @@ import json._
 import rules._
 import doses._
 
-trait Younger {
-  def youngerThan(dob: DateTime, numberOfMonths: Int): Boolean =
-    dob.plusMonths(numberOfMonths).isAfter(DateTime.now())
-}
-
-trait Recently {
-  def recently(dose: DateTime, numberOfMonths: Int): Boolean =
-    DateTime.now().plusMonths(-numberOfMonths).isBefore(dose)
-}
-
 // Vaccinations
 // Example names: DTAP, with maximum of 5 shots (vaccinations).
 //                Polio, with maximum of 5 shots (vaccinations).
