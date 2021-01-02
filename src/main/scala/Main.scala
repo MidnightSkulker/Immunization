@@ -275,35 +275,38 @@ class MMR (dob: DateTime, doses: DateMap)
 
 // Vaccination status rules for HEPA (Hepatitis A)
 class HEPA (dob: DateTime, doses: DateMap)
-    extends Vaccine("hepA", dob, doses, 4)
-    with Younger
-    with Recently {
-  override def immunizationStatus (): VaccineStatuses =
-    doses.size match {
-      case 0 =>
-        // Child is under 18 months old
-        if (youngerThan(dob, 18)) UpToDate
-        else Incomplete
-      case 1 =>
-        // Received after 12 months of age and less than 12 months ago.
-        if (doseIsAfter(firstDose, dob, 12) && recently(firstDose, 12)) UpToDate
-        // Received after 12 months of age and more that 12 months ago.
-        if (doseIsAfter(firstDose, dob, 12) && !recently(firstDose, 12)) Incomplete
-        // Received prior to 12 months of age and child is less that 18 months of age.
-        if (doseIsBefore(firstDose, dob, 12) && youngerThan(dob, 18)) UpToDate
-        // Recieved prior to 12 months of age and child is 18 months or older.
-        else Incomplete
-      case 2 =>
-        // Both doses received after 12 months of age.
-        if (doseIsAfter(firstDose, dob, 12) && doseIsAfter(secondDose, dob, 12)) Complete
-        // Dose 1 received prior to 12 months of age and dose 2
-        // received less than 2 months ago.
-        if (doseIsBefore(firstDose, dob, 12) && recently(secondDose, 12)) UpToDate
-        // Dose 1 received priot to 12 months of age and dose 2
-        // received 12 months of more ago.
-        else Incomplete
-      case 3 => Complete
-      case 4 => Complete
+    extends Vaccine("hepA", dob, doses, 4) with SpecificRules {
+  override def immunizationStatus (): VaccineStatuses = {
+    // zero doses, child is under 18 months old
+    val rule01: Rule = doseCountRule(0) && youngerThanRule(dob, 18, UpToDate)
+    val rule02: Rule = doseCountRule(0) && !youngerThanRule(dob, 18, UpToDate)
+    // 1 dose, first dose received after 12 months of age and less than 12 months ago.
+    val rule11: Rule = doseCountRule(1) && doseAfterDoseRule(firstDose, dob, 12) && recentlyRule(firstDose, 12, UpToDate)
+    // 1 dose, first dose received after 12 months of age and more that 12 months ago.
+    val rule12: Rule = doseCountRule(1) && doseAfterRule(firstDose, dob, 12) && !recentlyRule(firstDose, 12, Incomplete)
+    // 1 dose,  first dose prior to 12 months of age and
+    // child is less that 18 months of age.
+    val rule13: Rule = doseCountRule(1) && doseBeforeRule(firstDose, dob, 12) && youngerThanRule(dob, 18, UpToDate)
+    // 1 dose, first dose recieved prior to 12 months of age and
+    // child is 18 months or older.
+    val rule14: Rule = doseCountRule(1, Incomplete) // else
+    // 2 doses, both doses received after 12 months of age.
+    val rule21: Rule = doseCountRule(2) && doseAfterRule(firstDose, dob, 12) && doseAfterRule(secondDose, dob, 12, Complete)
+    // 2 doses, first dose received prior to 12 months of age and dose 2
+    // received less than 2 months ago.
+    val rule22: Rule = doseCountRule(2) && doseBeforeRule(firstDose, dob, 12) && recentlyRule(secondDose, 12, UpToDate)
+    // 2 doses, first dose received priot to 12 months of age and dose 2
+    // received 12 months of more ago.
+    val rule23: Rule = doseCountRule(2, Incomplete)
+    val rule31: Rule = doseCountRule(3, Complete)
+    val rule41: Rule = doseCountRule(4, Complete)
+
+    val rules: Rules = new Rules(
+      rules = List(rule01, rule02, rule11, rule12, rule13, rule14,
+        rule21, rule22, rule23, rule31, rule41))
+    val decision: RulesResult = rules.documentedDecision()
+    val report: String = rules.report()
+    return decision.finalStatus
   }
 }
 
