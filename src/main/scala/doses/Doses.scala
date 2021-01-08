@@ -4,20 +4,28 @@ import org.joda.time.DateTime
 import models.model._
 
 trait AgeRange {
-  def withinRange(d: DateTime, dob: DateTime, startMonth: Int, endMonth: Int): Boolean = {
-    (d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth))))
+  def withinRange(
+    dose: Option[DateTime],
+    dob: DateTime,
+    startMonth: Int,
+    endMonth: Int): Boolean = {
+    dose match {
+      case Some(d) => d.isAfter(dob.plusMonths(startMonth)) && (d.isBefore(dob.plusMonths(endMonth)))
+      case None => false // Might want an exception here.
+    }
   }
 }
 
 class DoseMap(name: String, doses: DateMap) {
   // Get the nth dose, using ordinal numbers. All the elements of the map are
   // assumed to have the a name in a series, such as "dtap1", "dtap2", ...
-  def nth(n: Int) = doses(name + n)
-  def firstDose: DateTime = nth(1)
-  def secondDose: DateTime = nth(2)
-  def thirdDose: DateTime = nth(3)
-  def fourthDose:DateTime =  nth(4)
-  def fifthDose: DateTime = nth(5)
+  def nth(n: Int): Option[DateTime] =
+    if (doses.contains(name + n)) Some(doses(name + n)) else None
+  def firstDose: Option[DateTime] = nth(1)
+  def secondDose: Option[DateTime] = nth(2)
+  def thirdDose: Option[DateTime] = nth(3)
+  def fourthDose:Option[DateTime] =  nth(4)
+  def fifthDose: Option[DateTime] = nth(5)
 }
 
 // Common operations on the doses given.

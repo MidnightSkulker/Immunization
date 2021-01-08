@@ -17,6 +17,7 @@ package object model {
   val Incomplete: VaccineStatuses = 2
   val UpToDate: VaccineStatuses = 3
   val Complete: VaccineStatuses = 4
+  val ShortCircuit: VaccineStatuses = 5
 
   // Make a summary status for the immunizations.
   // All must be Complete to get a complete status.
@@ -39,6 +40,7 @@ package object model {
       case 2 => "Incomplete"
       case 3 => "UpToDate"
       case 4 => "Complete"
+      case 5 => "ShortCircuit"
       case x => "Really Error"
     }
 }
