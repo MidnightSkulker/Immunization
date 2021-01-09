@@ -74,7 +74,7 @@ class Rule(
   status: VaccineStatuses) {
 
   def factors(): Factors = factors
-  def cond() = condition(factors)
+  def cond() = if (status == NA) false else condition(factors) // Short circuit on NA
   def description(): String = description
   def name(): String = name
   def status(): VaccineStatuses = status
@@ -83,17 +83,12 @@ class Rule(
     val combinedName: String = this.name + " && " + rb.name
     val combinedDescription = this.description + " and " + rb.description()
     def combinedCondition(f: Factors): Boolean = {
-      // Short Circuit
-      if (this.cond() == false) {
-        return false
-      }
-      else rb.cond()
-    }
+      if (this.cond() == false) false else rb.cond() }
     val combinedFactors = this.factors ++ rb.factors // Union of the two sets of factors.
     // When this rule is false, short circuit execution of the next (rb) rule.
     // Note this leaves the combined name, combined description and
     // combined condition alone.
-    val combinedStatus = if (!this.cond()) ShortCircuit else rb.status
+    val combinedStatus = if (!this.cond()) NA else rb.status
     val ret = new Rule(
       name = combinedName,
       description = combinedDescription,
@@ -159,16 +154,18 @@ class Rules(rules: List[Rule]) {
 }
 
 trait SpecificRules {
-  def errorRule(error: String, factors: Factors): Rule =
+  def errorRule(error: String, factors: Factors): Rule = {
+    println("\nERROR: " + error + "\n")
     new Rule(name = error, description = error, factors = factors, condition = factors => false, status = Error)
-  def doseCountRule(doses: DateMap, numberOfDoses: Int, status: VaccineStatuses = NA): Rule =
+  }
+  def doseCountRule(doses: DateMap, numberOfDoses: Int, status: VaccineStatuses = NoResult): Rule =
     new Rule(
       name = "doseCountRule",
       description = s"Number of doses is $numberOfDoses",
       factors = new Factors(numberOfDoses = doses.size),
       factors => factors.numberOfDoses == numberOfDoses,
       status = status)
-  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule =
+  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NoResult): Rule =
     new Rule(
       name = "olderThanRule",
       description = s"Child is older than $ageMonth",
@@ -178,14 +175,14 @@ trait SpecificRules {
   def youngerThanRule(
     dob: DateTime,
     ageMonth: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     new Rule(
       name = "youngerThanRule",
       description = s"Child is older than $ageMonth months",
       factors = new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isAfter(DateTime.now()),
       status = status)
-  def recentlyRule(dose: Option[DateTime], recentMonth: Int, status: VaccineStatuses = NA): Rule =
+  def recentlyRule(dose: Option[DateTime], recentMonth: Int, status: VaccineStatuses = NoResult): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "recentlyRule",
@@ -197,13 +194,13 @@ trait SpecificRules {
     }
   def newBornRule(
     dob: DateTime,
-    status: VaccineStatuses = NA): Rule = youngerThanRule(dob, 2, status)
+    status: VaccineStatuses = NoResult): Rule = youngerThanRule(dob, 2, status)
   def withinAgeRangeRule(
     dob: DateTime,
     dose: Option[DateTime],
     startMonth: Int,
     endMonth: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "recentlyRule",
@@ -218,7 +215,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: Option[DateTime],
     ageMonth: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "doseAfterRule",
@@ -232,7 +229,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: Option[DateTime],
     ageMonth: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "doseBeforeRule",
@@ -246,7 +243,7 @@ trait SpecificRules {
     dose1: Option[DateTime],
     dose2: Option[DateTime],
     days: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     dose1 match {
       case Some(d1) =>
         dose2 match {
@@ -265,7 +262,7 @@ trait SpecificRules {
     dose1: Option[DateTime],
     dose2: Option[DateTime],
     days: Int,
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     dose1 match {
       case Some(d1) =>
         dose2 match {
@@ -283,7 +280,7 @@ trait SpecificRules {
   def diseaseHistoryRule(
     disease: String,
     diseaseHistory: List[String],
-    status: VaccineStatuses = NA): Rule =
+    status: VaccineStatuses = NoResult): Rule =
     new Rule(
       name = "diseaseHistoryRule",
       description = s"Is $disease in disease history",
