@@ -78,7 +78,6 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
         rule24, rule25, rule26, rule31, rule32, rule33, rule34,
         rule35, rule41, rule42, rule43, rule51))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
   }
 }
@@ -132,7 +131,6 @@ class HIB (dob: DateTime, doses: DateMap)
         rule21, rule22, rule23, rule24, rule25,
         rule31, rule32, rule33, rule34, rule35, rule36, rule41))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
   }
 }
@@ -173,7 +171,6 @@ class Polio (dob: DateTime, doses: DateMap)
       rules = List(rule18, rule01, rule02, rule11, rule12, rule13,
         rule21, rule22, rule23, rule31, rule32, rule33, rule34, rule41))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
     }
 }
@@ -216,7 +213,6 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
       rules = List(ruleChickenPox, rule01, rule02, rule11, rule12, rule13, rule14, rule15,
         rule21, rule22, rule23, rule24, rule31))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
   }
 }
@@ -262,7 +258,6 @@ class MMR (dob: DateTime, doses: DateMap)
     rules = List(rule01, rule02, rule11, rule12, rule13, rule14, rule15,
       rule21, rule22, rule23, rule24, rule25, rule26, rule31))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
   }
 }
@@ -299,7 +294,6 @@ class HEPA (dob: DateTime, doses: DateMap)
       rules = List(rule01, rule02, rule11, rule12, rule13, rule14,
         rule21, rule22, rule23, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
   }
 }
@@ -340,7 +334,6 @@ class HEPB (dob: DateTime, doses: DateMap)
       rules = List(rule01, rule02, rule11, rule12, rule13, rule14, rule15,
         rule21, rule22, rule23, rule24, rule25, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
-    val report: String = rules.report()
     return decision
     }
 }
@@ -388,26 +381,26 @@ class Student(jsonMap: JsonMap){
     // Validate the shots.
     val dtap: DTAP = new DTAP(fullName, dob, dtapShots)
     val dtapResult: RulesResult = dtap.immunizationStatus()
-    println("DTAP Status with " + dtapShots.size + " shots for " + fullName + " is " + dtapResult.out())
+    println("\nDTAP Status with " + dtapShots.size + " shots for " + fullName + " is " + dtapResult.out() + "\n")
     val hib: HIB = new HIB(dob, hibShots)
     val hibResult: RulesResult = hib.immunizationStatus()
-    println("HIB Status with " + hibShots.size + " shots for " + fullName + " is " + hibResult.out())
+    println("\nHIB Status with " + hibShots.size + " shots for " + fullName + " is " + hibResult.out() + "\n")
     val polio: Polio = new Polio(dob, polioShots)
     val polioResult: RulesResult = polio.immunizationStatus()
-    println("Polio Status with " + polioShots.size + " shots for " + fullName + " is " + polioResult.out())
+    println("\nPolio Status with " + polioShots.size + " shots for " + fullName + " is " + polioResult.out() + "\n")
     val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
     println("varicella shots for " + fullName + " are " + varicellaShots + " --- " + varicellaShots.size)
     val varicellaResult: RulesResult = varicella.immunizationStatus()
-    println("varicella Status for " + fullName + " is " + varicellaResult.out())
+    println("\nvaricella Status for " + fullName + " is " + varicellaResult.out() + "\n")
     val mmr: MMR = new MMR(dob, mmrShots)
     val mmrResult: RulesResult = mmr.immunizationStatus()
-    println("MMR Status for " + fullName + " is " + mmrResult.out())
+    println("\nMMR Status for " + fullName + " is " + mmrResult.out() + "\n")
     val hepa: HEPA = new HEPA(dob, hepaShots)
     val hepaResult: RulesResult = hepa.immunizationStatus()
-    println("HEPA Status for " + fullName + " is " + hepaResult.out())
+    println("\nHEPA Status for " + fullName + " is " + hepaResult.out() + "\n")
     val hepb: HEPB = new HEPB(dob, hepbShots)
     val hepbResult: RulesResult = hepb.immunizationStatus()
-    println("HEPB Status for " + fullName + " is " + hepbResult.out())
+    println("\nHEPB Status for " + fullName + " is " + hepbResult.out() + "\n")
 
     return List(dtapResult,
       hibResult, polioResult, varicellaResult, mmrResult, hepaResult, hepbResult)

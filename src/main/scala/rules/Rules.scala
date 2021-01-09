@@ -91,6 +91,8 @@ class Rule(
     }
     val combinedFactors = this.factors ++ rb.factors // Union of the two sets of factors.
     // When this rule is false, short circuit execution of the next (rb) rule.
+    // Note this leaves the combined name, combined description and
+    // combined condition alone.
     val combinedStatus = if (!this.cond()) ShortCircuit else rb.status
     val ret = new Rule(
       name = combinedName,
@@ -98,7 +100,6 @@ class Rule(
       factors = combinedFactors,
       condition = combinedCondition,
       status = combinedStatus)
-    // println("Rules.ret && -- " + this.cond() + ", combinedStatus: " + outStatus(combinedStatus) + ", " + outRule(ret))
     return ret
   }
   def ||(rb: Rule): Rule = {
@@ -128,6 +129,8 @@ class RulesResult(
   factors: Factors = new Factors(),
   results: List[RuleResult] = List()) {
   def finalStatus(): VaccineStatuses = finalStatus
+  def report(): String = report()
+  def results(): List[RuleResult] = results
   def out(): String = outStatus(finalStatus)
 }
 
