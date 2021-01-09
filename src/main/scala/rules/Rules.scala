@@ -122,11 +122,14 @@ class Rule(
   def applyRule(): RuleResult = new RuleResult(this.description(), factors, condStatus(factors))
 }
 
-case class RulesResult(
-  finalStatus: VaccineStatuses,
-  report: String,
-  factors: Factors,
-  results: List[RuleResult])
+class RulesResult(
+  finalStatus: VaccineStatuses = NA,
+  report: String = "",
+  factors: Factors = new Factors(),
+  results: List[RuleResult] = List()) {
+  def finalStatus(): VaccineStatuses = finalStatus
+  def out(): String = outStatus(finalStatus)
+}
 
 // A rule set is a collection of rules.
 // Each rule in the rule set considers a different case, and renders a decision.
@@ -149,7 +152,7 @@ class Rules(rules: List[Rule]) {
       }
     return new RulesResult(finalStatus, report, this.listFactors(), results)
   }
-  def report(): String = documentedDecision().report
+  def report(): String = documentedDecision().out()
 }
 
 trait SpecificRules {

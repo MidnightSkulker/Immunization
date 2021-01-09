@@ -21,14 +21,14 @@ abstract class Vaccine(name: String,
   doses: DateMap,
   max: Int)
     extends Doses(name: String, dob: DateTime, doses: DateMap) {
-  def immunizationStatus (): VaccineStatuses = NA
+  def immunizationStatus (): RulesResult = new RulesResult()
 }
 
 // Vaccination status rules for DTAP (Diptheria, Tetanus, Pertussis)
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
 class DTAP (name: String, dob: DateTime, doses: DateMap)
     extends Vaccine("dtap", dob, doses, 5) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
     val rule02: Rule = doseCountRule(doses, 0) && !newBornRule(dob, Incomplete)
     // One dose, first dose less than 2 months old or
@@ -79,14 +79,14 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
         rule35, rule41, rule42, rule43, rule51))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
   }
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class HIB (dob: DateTime, doses: DateMap)
     extends Vaccine("hib", dob, doses, 5) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     // Not required for 5 years and older.
     val rule5 = olderThanRule(dob, 60, Complete)
     // Zero doses, child is less than 2 months old, HIB is not needed yet.
@@ -133,14 +133,14 @@ class HIB (dob: DateTime, doses: DateMap)
         rule31, rule32, rule33, rule34, rule35, rule36, rule41))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
   }
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Polio (dob: DateTime, doses: DateMap)
     extends Vaccine("polio", dob, doses, 5) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     // If child is more than 18 years old, Polio vaccine is not needed yet.
     val rule18: Rule = olderThanRule(dob, 18 * 12, Complete)
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
@@ -174,14 +174,14 @@ class Polio (dob: DateTime, doses: DateMap)
         rule21, rule22, rule23, rule31, rule32, rule33, rule34, rule41))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
     }
 }
 
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     extends Vaccine("varicella", dob, doses, 2) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     println("-----> Starting Varicella Rules")
     val ruleChickenPox = diseaseHistoryRule("Chicken Pox", diseaseHistory, Complete)
     // 0 doses, child is less than 18 months old.
@@ -217,14 +217,14 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
         rule21, rule22, rule23, rule24, rule31))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
   }
 }
 
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
 class MMR (dob: DateTime, doses: DateMap)
   extends Vaccine("mmr", dob, doses, 2) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     // 0 doses, child is under 15 months old
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 15, UpToDate)
     // 0 doses, child is more than 15 months old
@@ -263,14 +263,14 @@ class MMR (dob: DateTime, doses: DateMap)
       rule21, rule22, rule23, rule24, rule25, rule26, rule31))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
   }
 }
 
 // Vaccination status rules for HEPA (Hepatitis A)
 class HEPA (dob: DateTime, doses: DateMap)
     extends Vaccine("hepA", dob, doses, 4) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     // zero doses, child is under 18 months old
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 18, UpToDate)
     val rule02: Rule = doseCountRule(doses, 0) && !youngerThanRule(dob, 18, UpToDate)
@@ -300,14 +300,14 @@ class HEPA (dob: DateTime, doses: DateMap)
         rule21, rule22, rule23, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
   }
 }
 
 // Vaccination status rules for HEPB (Hepatitis B)
 class HEPB (dob: DateTime, doses: DateMap)
     extends Vaccine("hepB", dob, doses, 3) with SpecificRules {
-  override def immunizationStatus (): VaccineStatuses = {
+  override def immunizationStatus (): RulesResult = {
     // 0 doses, child is under 2 months old.
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 2, UpToDate)
     // 0 doses, child is over 2 months old.
@@ -341,7 +341,7 @@ class HEPB (dob: DateTime, doses: DateMap)
         rule21, rule22, rule23, rule24, rule25, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
     val report: String = rules.report()
-    return decision.finalStatus
+    return decision
     }
 }
 
@@ -377,7 +377,7 @@ class Student(jsonMap: JsonMap){
     } else { filtered.map(kv => (kv._1, new DateTime(kv._2))) }
   }
 
-  def gatherStatus(): List[VaccineStatuses] = {
+  def gatherStatus(): List[RulesResult] = {
     val dtapShots: DateMap = convertDateStrings(filterShots(jsonMap, "dtap.*"))
     val polioShots: DateMap = convertDateStrings(filterShots(jsonMap, "polio.*"))
     val mmrShots: DateMap = convertDateStrings(filterShots(jsonMap, "mmr.*"))
@@ -387,28 +387,30 @@ class Student(jsonMap: JsonMap){
     val hepbShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepB.*"))
     // Validate the shots.
     val dtap: DTAP = new DTAP(fullName, dob, dtapShots)
-    val dtapStatus: VaccineStatuses = dtap.immunizationStatus()
-    println("DTAP Status for " + fullName + " is " + dtapStatus)
+    val dtapResult: RulesResult = dtap.immunizationStatus()
+    println("DTAP Status with " + dtapShots.size + " shots for " + fullName + " is " + dtapResult.out())
     val hib: HIB = new HIB(dob, hibShots)
-    val hibStatus: VaccineStatuses = hib.immunizationStatus()
-    println("HIB Status for " + fullName + " is " + hibStatus)
+    val hibResult: RulesResult = hib.immunizationStatus()
+    println("HIB Status with " + hibShots.size + " shots for " + fullName + " is " + hibResult.out())
     val polio: Polio = new Polio(dob, polioShots)
-    val polioStatus: VaccineStatuses = polio.immunizationStatus()
-    println("polio Status for " + fullName + " is " + polioStatus)
+    val polioResult: RulesResult = polio.immunizationStatus()
+    println("Polio Status with " + polioShots.size + " shots for " + fullName + " is " + polioResult.out())
     val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
     println("varicella shots for " + fullName + " are " + varicellaShots + " --- " + varicellaShots.size)
-    val varicellaStatus: VaccineStatuses = varicella.immunizationStatus()
-    println("varicella Status for " + fullName + " is " + varicellaStatus)
+    val varicellaResult: RulesResult = varicella.immunizationStatus()
+    println("varicella Status for " + fullName + " is " + varicellaResult.out())
     val mmr: MMR = new MMR(dob, mmrShots)
-    val mmrStatus: VaccineStatuses = mmr.immunizationStatus()
-    println("MMR Status for " + fullName + " is " + mmrStatus)
+    val mmrResult: RulesResult = mmr.immunizationStatus()
+    println("MMR Status for " + fullName + " is " + mmrResult.out())
     val hepa: HEPA = new HEPA(dob, hepaShots)
-    val hepaStatus: VaccineStatuses = hepa.immunizationStatus()
+    val hepaResult: RulesResult = hepa.immunizationStatus()
+    println("HEPA Status for " + fullName + " is " + hepaResult.out())
     val hepb: HEPB = new HEPB(dob, hepbShots)
-    val hepbStatus: VaccineStatuses = hepb.immunizationStatus()
+    val hepbResult: RulesResult = hepb.immunizationStatus()
+    println("HEPB Status for " + fullName + " is " + hepbResult.out())
 
-    return List(dtapStatus,
-      hibStatus, polioStatus, varicellaStatus, mmrStatus, hepaStatus, hepbStatus)
+    return List(dtapResult,
+      hibResult, polioResult, varicellaResult, mmrResult, hepaResult, hepbResult)
   }
 
   def printStudent():Unit = {
@@ -435,8 +437,8 @@ class Students (students: JsonMaps) {
     println("Processing Student")
     val student: Student = new Student(studentJson)
     student.printStudent()
-    val statuses:List[VaccineStatuses] = student.gatherStatus()
-    val summary: VaccineStatuses = summaryStatus(statuses)
+    val results:List[RulesResult] = student.gatherStatus()
+    val summary: VaccineStatuses = summaryStatus(results.map(_.finalStatus))
     (student.fullName, summary)
   }
 
