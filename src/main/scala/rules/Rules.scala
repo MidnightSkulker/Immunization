@@ -1,5 +1,6 @@
 package rules
 
+// import util.control.Breaks._
 import models.model._
 import org.joda.time.DateTime
 
@@ -140,6 +141,7 @@ class Rules(rules: List[Rule]) {
   def applyRules(): List[RuleResult] = rules.map(_.applyRule)
   // Summary decision for all the rules.
   def documentedDecision(): RulesResult = {
+    // Apply each of the rules.
     val results: List[RuleResult] = applyRules()
     val nonNAResults: List[RuleResult] = results.filter(r => r.status != NA)
     val (finalStatus, report) =
@@ -158,14 +160,14 @@ trait SpecificRules {
     println("\nERROR: " + error + "\n")
     new Rule(name = error, description = error, factors = factors, condition = factors => false, status = Error)
   }
-  def doseCountRule(doses: DateMap, numberOfDoses: Int, status: VaccineStatuses = NoResult): Rule =
+  def doseCountRule(doses: DateMap, numberOfDoses: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       name = "doseCountRule",
       description = s"Number of doses is $numberOfDoses",
       factors = new Factors(numberOfDoses = doses.size),
       factors => factors.numberOfDoses == numberOfDoses,
       status = status)
-  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NoResult): Rule =
+  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       name = "olderThanRule",
       description = s"Child is older than $ageMonth",
@@ -175,14 +177,14 @@ trait SpecificRules {
   def youngerThanRule(
     dob: DateTime,
     ageMonth: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       name = "youngerThanRule",
       description = s"Child is older than $ageMonth months",
       factors = new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isAfter(DateTime.now()),
       status = status)
-  def recentlyRule(dose: Option[DateTime], recentMonth: Int, status: VaccineStatuses = NoResult): Rule =
+  def recentlyRule(dose: Option[DateTime], recentMonth: Int, status: VaccineStatuses = NA): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "recentlyRule",
@@ -194,13 +196,13 @@ trait SpecificRules {
     }
   def newBornRule(
     dob: DateTime,
-    status: VaccineStatuses = NoResult): Rule = youngerThanRule(dob, 2, status)
+    status: VaccineStatuses = NA): Rule = youngerThanRule(dob, 2, status)
   def withinAgeRangeRule(
     dob: DateTime,
     dose: Option[DateTime],
     startMonth: Int,
     endMonth: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "recentlyRule",
@@ -215,7 +217,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: Option[DateTime],
     ageMonth: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "doseAfterRule",
@@ -229,7 +231,7 @@ trait SpecificRules {
     dob: DateTime,
     dose: Option[DateTime],
     ageMonth: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     dose match {
       case Some(d) => new Rule(
         name = "doseBeforeRule",
@@ -243,7 +245,7 @@ trait SpecificRules {
     dose1: Option[DateTime],
     dose2: Option[DateTime],
     days: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     dose1 match {
       case Some(d1) =>
         dose2 match {
@@ -262,7 +264,7 @@ trait SpecificRules {
     dose1: Option[DateTime],
     dose2: Option[DateTime],
     days: Int,
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     dose1 match {
       case Some(d1) =>
         dose2 match {
@@ -280,7 +282,7 @@ trait SpecificRules {
   def diseaseHistoryRule(
     disease: String,
     diseaseHistory: List[String],
-    status: VaccineStatuses = NoResult): Rule =
+    status: VaccineStatuses = NA): Rule =
     new Rule(
       name = "diseaseHistoryRule",
       description = s"Is $disease in disease history",

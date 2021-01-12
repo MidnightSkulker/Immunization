@@ -13,11 +13,10 @@ package object model {
 
   type VaccineStatuses = Int
   val NA: VaccineStatuses = 0
-  val NoResult: VaccineStatuses = 1
-  val Error: VaccineStatuses = 2
-  val Incomplete: VaccineStatuses = 3
-  val UpToDate: VaccineStatuses = 4
-  val Complete: VaccineStatuses = 5
+  val Error: VaccineStatuses = 1
+  val Incomplete: VaccineStatuses = 2
+  val UpToDate: VaccineStatuses = 3
+  val Complete: VaccineStatuses = 4
 
   // Make a summary status for the immunizations.
   // All must be Complete to get a complete status.
@@ -36,11 +35,10 @@ package object model {
   def outStatus(v: VaccineStatuses): String =
     v match {
       case 0 => "NA"
-      case 1 => "No Result"
-      case 2 => "Error"
-      case 3 => "Incomplete"
-      case 4 => "UpToDate"
-      case 5 => "Complete"
+      case 1 => "Error"
+      case 2 => "Incomplete"
+      case 3 => "UpToDate"
+      case 4 => "Complete"
       case x => "Really Error"
     }
 }
