@@ -179,7 +179,6 @@ class Polio (dob: DateTime, doses: DateMap)
 class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     extends Vaccine("varicella", dob, doses, 2) with SpecificRules {
   override def immunizationStatus (): RulesResult = {
-    println("-----> Starting Varicella Rules")
     val ruleChickenPox = diseaseHistoryRule("Chicken Pox", diseaseHistory, Complete)
     // 0 doses, child is less than 18 months old.
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 18, UpToDate)
@@ -195,14 +194,11 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     // 1 dose, first dose at or after 13 years of age and less than two months ago.
     val rule15: Rule = doseCountRule(doses, 1) && olderThanRule(dob, 13 * 12) && !recentlyRule(firstDose, 2, Incomplete)
     val rule16: Rule = doseCountRule(doses, 1, Incomplete)
-    println("-----> Varicella done with 1 dose rules")
     // 2 doses, At least one dose given between 12 months of age and 12 years of age
     val rule21: Rule = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && doseBeforeRule(dob, firstDose, 12 * 12, Complete)
-    println("-----> Varicella done with rule21")
     // 2 doses, First dose given after age 13 and second dose given more than 24
     // days after the first dose.
     val rule22: Rule = doseCountRule(doses, 2) && (doseAfterRule(dob, firstDose, 13 * 12) && doseAfterDoseRule(firstDose, secondDose, 24, Complete))
-    println("-----> Varicella done with rule22")
     // 2 doses, Second dose given fewer than 24 days after the first dose and less
     val rule23: Rule =  doseCountRule(doses, 2) && doseBeforeDoseRule(firstDose, secondDose, 24) && recentlyRule(secondDose, 2, UpToDate)
     // 2 doses Second dose prior to 12 months of age
@@ -415,7 +411,7 @@ class Student(jsonMap: JsonMap){
     val hepaShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepA.*"))
     val hepbShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepB.*"))
     println("Name: " + fullName + "\t\tDOB: " + dob)
-    println("DTAP Shots: \t" + dtapShots)
+    println("DTAP Shots(" + dtapShots.size + "): " + dtapShots)
     println("Polio Shots: \t" + polioShots)
     println("MMR Shots: \t" + mmrShots)
     println("Varicella Shots: \t" + varicellaShots)
