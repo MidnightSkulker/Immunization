@@ -80,18 +80,18 @@ class Rule(
   def name(): String = name
   def status(): VaccineStatuses = status
   def outRule(r: Rule): String = "^^^^^^ RULE: " + r.name() + " -- Description: " + r.description() + " -- status: " + outStatus(r.status())
-  
+
   def &&(rb: Rule): Rule = {
     val result: Boolean = this.cond()
     val combinedName: String = this.name + " && " + rb.name
     val combinedDescription = this.description + " and " + rb.description()
-    def combinedCondition(f: Factors): Boolean = {
-      if (result == false) false else rb.cond() }
+    def combinedCondition(f: Factors): Boolean =
+      if (result == false) false else rb.cond()
     val combinedFactors = this.factors ++ rb.factors // Union of the two sets of factors.
     // When this rule is false, short circuit execution of the next (rb) rule.
     // Note this leaves the combined name, combined description and
     // combined condition alone.
-    val combinedStatus = if (!result) NA else rb.status
+    val combinedStatus = if (this.cond()) NA else rb.status
     val ret = new Rule(
       name = combinedName,
       description = combinedDescription,
