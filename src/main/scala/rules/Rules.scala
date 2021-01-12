@@ -156,6 +156,9 @@ class Rules(rules: List[Rule]) {
 }
 
 trait SpecificRules {
+  def naRule(name: String, factors: Factors): Rule = {
+    new Rule(name = name, description = "None passed in", factors = factors, condition = factors => false, status = NA)
+  }
   def errorRule(error: String, factors: Factors): Rule = {
     println("\nERROR: " + error + "\n")
     new Rule(name = error, description = error, factors = factors, condition = factors => false, status = Error)
@@ -192,7 +195,7 @@ trait SpecificRules {
         factors = new Factors(dose1 = d, recentMonth = recentMonth),
         factors => DateTime.now().plusMonths(-recentMonth).isBefore(d),
         status)
-      case None => errorRule("None dose passed in / recentlyRule", new Factors())
+      case None => naRule(name = "recentlyRule", new Factors())
     }
   def newBornRule(
     dob: DateTime,
@@ -211,7 +214,7 @@ trait SpecificRules {
         factors => d.isAfter(factors.dob.plusMonths(factors.startMonth)) &&
         (d.isBefore(factors.dob.plusMonths(factors.endMonth))),
         status)
-      case None => errorRule("None dose passed in / withinAgeRangeRule", new Factors())
+      case None => naRule(name = "withinAgeRangeRule", new Factors())
     }
   def doseAfterRule(
     dob: DateTime,
@@ -225,7 +228,7 @@ trait SpecificRules {
         factors = new Factors(dob = dob, dose1 = d, ageMonth = ageMonth),
         factors => d.isAfter(dob.plusMonths(factors.ageMonth)),
         status = status)
-      case None => errorRule("None dose passed in / doseAfterRule", new Factors())
+      case None => naRule(name = "doseAfterRule", new Factors())
     }
   def doseBeforeRule(
     dob: DateTime,
@@ -239,7 +242,7 @@ trait SpecificRules {
         factors = new Factors(dob = dob, dose1 = d, ageMonth = ageMonth),
         factors => d.isBefore(dob.plusMonths(factors.ageMonth)),
         status = status)
-      case None => errorRule("None dose passed in / doseBeforeRule", new Factors())
+      case None => naRule(name = "doseBeforeRule", new Factors())
     }
   def doseAfterDoseRule(
     dose1: Option[DateTime],
@@ -255,9 +258,9 @@ trait SpecificRules {
             factors = new Factors(dose1 = d1, dose2 = d2, days = days),
             factors => d2.isAfter(d1.plusDays(days)),
             status = status)
-          case None => errorRule("None dose2 passed in / doseAfterDoseRule", new Factors())
+          case None => naRule(name = "doseAfterDoseRule", new Factors())
         }
-      case None => errorRule("None dose1 passed in / doseAfterDoseRule", new Factors())
+      case None => naRule(name = "doseAfterDoseRule", new Factors())
     }
 
   def doseBeforeDoseRule(
@@ -274,9 +277,9 @@ trait SpecificRules {
             factors = new Factors(dose1 = d1, dose2 = d2, days = days),
             factors => d2.isBefore(d1.plusDays(days)),
             status = status)
-          case None => errorRule("None dose2 passed in / doseBeforeDoseRule", new Factors())
+          case None => naRule(name = "doseBeforeDoseRule", new Factors())
         }
-      case None => errorRule("None dose1 passed in / doseBeforeDoseRule", new Factors())
+      case None => naRule(name = "doseBeforeDoseRule", new Factors())
     }
 
   def diseaseHistoryRule(
