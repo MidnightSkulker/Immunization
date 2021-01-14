@@ -29,7 +29,6 @@ class Factors(
   def endMonth(): Int = endMonth
   def days(): Int = days
   def history(): List[String] = history
-  def outFactors(): String = " Factors: # doses: " + numberOfDoses + " -- dose1: " + dose1 + " -- ageMonth: " + ageMonth ++ " -- dob: " + dob
   // Compare two factors, and select the last one that is not null
   // (if either are not null).
   def nonNull(x: Int, y: Int): Int = if (x != 0) x else y // 0 is the null value
@@ -49,6 +48,19 @@ class Factors(
     nonNull(this.endMonth, f2.endMonth),
     nonNull(this.days, f2.days),
     nonNull(this.history, f2.history))
+  def out(): String = {
+    val numberOfDosesOut = ("#Doses = " + numberOfDoses())
+    val dobOut = if (dob() != null) ("dob = " + dob()) else ""
+    val dose1Out = if (dose1() != null) ("dose1 = " + dose1()) else ""
+    val dose2Out = if (dose2() != null) ("dose2 = " + dose2()) else ""
+    val recentMonthOut = if (recentMonth() != 0) ("recentMonth = " + recentMonth()) else ""
+    val ageMonthOut = if (ageMonth() != 0) ("ageMonth = " + ageMonth()) else ""
+    val startMonthOut = if (startMonth() != 0) ("startMonth = " + startMonth()) else ""
+    val endMonthOut = if (endMonth() != 0) ("endMonth = " + endMonth()) else ""
+    val daysOut = if (days() != 0) ("days = " + days()) else ""
+    def params = List(numberOfDosesOut, dobOut, dose1Out, dose2Out, recentMonthOut, ageMonthOut, startMonthOut, endMonthOut).filter(_ != "")
+    return parenthesize(params)
+  }
   }
 
 case class RuleResult(
@@ -75,46 +87,42 @@ class Rule(
   status: VaccineStatuses) {
 
   def factors(): Factors = factors
-  def cond() = if (status == NA) false else condition(factors) // Short circuit on NA
+  def cond() = condition(factors)
   def description(): String = description
   def name(): String = name
   def status(): VaccineStatuses = status
+  def callOut(): String = name() + factors().out() + " = " + this.cond()
   def outRule(r: Rule): String = "^^^^^^ RULE: " + r.name() + " -- Description: " + r.description() + " -- status: " + outStatus(r.status())
 
   def &&(rb: Rule): Rule = {
-    val result: Boolean = this.cond()
-    val combinedName: String = this.name + " && " + rb.name
-    val combinedDescription = this.description + " and " + rb.description()
-    def combinedCondition(f: Factors): Boolean =
-      if (result == false) false else rb.cond()
-    val combinedFactors = this.factors ++ rb.factors // Union of the two sets of factors.
-    // When this rule is false, short circuit execution of the next (rb) rule.
-    // Note this leaves the combined name, combined description and
-    // combined condition alone.
-    val combinedStatus = if (this.cond()) NA else rb.status
+    val combinedName: String = this.callOut() + " && " + rb.callOut()
+    val combinedDescription = this.description() + " and " + rb.description()
+    def combinedCondition(f: Factors): Boolean = this.cond() && rb.cond()
+    val combinedFactors = this.factors() ++ rb.factors() // Union of the two sets of factors.
+    val combinedStatus = if (combinedCondition(combinedFactors)) rb.status() else NA
     val ret = new Rule(
       name = combinedName,
       description = combinedDescription,
       factors = combinedFactors,
       condition = combinedCondition,
       status = combinedStatus)
-    print("<<" + name + "|" + outStatus(combinedStatus) + ">>")
+    println("\t<<" + callOut() + " -&& " + outStatus(combinedStatus) + ">>")
     return ret
   }
   def ||(rb: Rule): Rule = {
-    val combinedName: String = this.name + " || " + rb.name
-    val combinedDescription: String = this.description + " or " + rb.description()
+    val combinedName: String = this.callOut() + " || " + rb.callOut()
+    val combinedDescription: String = this.description() + " or " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond() || rb.cond()
     val combinedFactors = this.factors ++ rb.factors // union of the two sets of factors
-    print("<<" + name + "|" + outStatus(rb.status) + ">>")
+    println("\t<<" + callOut() + " -|| " + outStatus(rb.status()) + ">>")
     new Rule(combinedName, combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def unary_!(): Rule = {
-    val combinedName: String = "!" + name
-    val combinedDescription = "not " + this.description
+    val combinedName: String = "!" + this.callOut()
+    val combinedDescription = "not " + this.description()
     def combinedCondition(f: Factors): Boolean = !this.cond()
-    val combinedStatus: VaccineStatuses = if (this.cond()) NA else this.status
-    print("<<" + name + "|" + outStatus(combinedStatus) + ">>")
+    val combinedStatus: VaccineStatuses = if (!this.cond()) NA else this.status()
+    println("\t<<" + callOut() + " -! " + outStatus(combinedStatus) + ">>")
     new Rule(combinedName, combinedDescription, factors, combinedCondition, combinedStatus)
   }
   def condStatus(f: Factors): VaccineStatuses = {
@@ -187,13 +195,15 @@ trait SpecificRules {
       factors = new Factors(numberOfDoses = doses.size),
       factors => factors.numberOfDoses == numberOfDoses,
       status = status)
-  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule =
+  def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule = {
+    println("##### olderThanRule, ageMonth = " + ageMonth + ", dob = " + dob + ", outcome = " + dob.plusMonths(ageMonth).isBefore(DateTime.now())) + ", status = " + status
     new Rule(
       name = "olderThanRule",
       description = s"Child is older than $ageMonth months",
       factors = new Factors(dob = dob, ageMonth = ageMonth),
       factors => dob.plusMonths(factors.ageMonth).isBefore(DateTime.now()),
       status)
+  }
   def youngerThanRule(
     dob: DateTime,
     ageMonth: Int,
@@ -247,18 +257,22 @@ trait SpecificRules {
         status = status)
       case None => naRule(name = "doseAfterRule", new Factors())
     }
+  // Dose is before child is the specified number of months old.
   def doseBeforeRule(
     dob: DateTime,
     dose: Option[DateTime],
     ageMonth: Int,
     status: VaccineStatuses = NA): Rule =
     dose match {
-      case Some(d) => new Rule(
-        name = "doseBeforeRule",
-        description = s"Dose is given before age $ageMonth months",
-        factors = new Factors(dob = dob, dose1 = d, ageMonth = ageMonth),
-        factors => d.isBefore(dob.plusMonths(factors.ageMonth)),
-        status = status)
+      case Some(d) => {
+        println("##### doseBeforeRule, ageMonth = " + ageMonth + ", dob = " + dob + ", dose = " + d + ", outcome = " + d.isBefore(dob.plusMonths(ageMonth))) + ", status = " + status
+        new Rule(
+          name = "doseBeforeRule",
+          description = s"Dose is given before age $ageMonth months",
+          factors = new Factors(dob = dob, dose1 = d, ageMonth = ageMonth),
+          factors => d.isBefore(dob.plusMonths(factors.ageMonth)),
+          status = status)
+      }
       case None => naRule(name = "doseBeforeRule", new Factors())
     }
   def doseAfterDoseRule(

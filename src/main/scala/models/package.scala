@@ -41,4 +41,7 @@ package object model {
       case 4 => "Complete"
       case x => "Really Error"
     }
+
+  // Some string manipulations we need
+  def parenthesize(args: List[String]): String = "(" + args.mkString(", ") + ")"
 }
