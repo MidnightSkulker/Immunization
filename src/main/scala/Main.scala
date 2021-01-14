@@ -420,6 +420,7 @@ class Student(jsonMap: JsonMap){
     println("HIB Shots: \t" + hibShots)
     println("Hepatitus A Shots: \t" + hepaShots)
     println("Hepatitus B Shots: \t" + hepbShots)
+    println()
   }
 }
 
