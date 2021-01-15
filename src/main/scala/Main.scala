@@ -37,7 +37,7 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
   private val logger = LoggerFactory.getLogger(classOf[DTAP])
 
   override def immunizationStatus (): RulesResult = {
-    // logger.info("Class DTAP immunization Status")
+    logger.info("LOG LOG Class DTAP immunization Status")
 
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
     // val rule02: Rule = doseCountRule(doses, 0) && !newBornRule(dob, Incomplete)
