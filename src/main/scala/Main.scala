@@ -8,6 +8,8 @@ import org.joda.time.DateTime
 import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
+import org.apache.logging.log4j.scala.Logging
+import org.apache.logging.log4j.scala.Logger
 import models.model._
 import json._
 import rules._
@@ -42,7 +44,7 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     // val rule21 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
     // // 2 doses, dose 1 received at or after 1st birthday and
     // // dose 2 received more than 12 months ago.
-    // val rule22 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
+    val rule22 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
     // // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
     // val rule23 = doseCountRule(doses, 2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
     // // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
@@ -76,7 +78,7 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
     //   rules = List(rule01, rule02, rule11, rule12, rule21, rule22, rule23,
     //     rule24, rule25, rule26, rule31, rule32, rule33, rule34,
     //     rule35, rule41, rule42, rule43, rule51))
-    val rules: Rules = new Rules(rules = List(rule01, rule43))
+    val rules: Rules = new Rules(rules = List(rule01, rule22, rule43))
     val decision: RulesResult = rules.documentedDecision()
     println("DTAP Decision: " + outStatus(decision.finalStatus()))
     System.exit(-4)
