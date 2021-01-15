@@ -8,8 +8,12 @@ import org.joda.time.DateTime
 import java.text.SimpleDateFormat
 import org.joda.time.Period
 import scala.util.matching.Regex
-import org.apache.logging.log4j.scala.Logging
-import org.apache.logging.log4j.scala.Logger
+// import org.apache.log4j._
+// import org.apache.logging.log4j.scala.Logging
+// import org.apache.logging.log4j.scala.Logger._
+// import org.apache.logging.log4j._
+import org.slf4j.LoggerFactory
+
 import models.model._
 import json._
 import rules._
@@ -29,7 +33,12 @@ abstract class Vaccine(name: String,
 // Other abbreviations used are DTP, DTap, DT, Td, Tdap.
 class DTAP (name: String, dob: DateTime, doses: DateMap)
     extends Vaccine("dtap", dob, doses, 5) with SpecificRules {
+
+  private val logger = LoggerFactory.getLogger(classOf[DTAP])
+
   override def immunizationStatus (): RulesResult = {
+    // logger.info("Class DTAP immunization Status")
+
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
     // val rule02: Rule = doseCountRule(doses, 0) && !newBornRule(dob, Incomplete)
     // // One dose, first dose less than 2 months old or
