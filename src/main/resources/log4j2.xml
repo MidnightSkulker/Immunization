@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO">
-    <Appenders>
-        <Console name="console" target="SYSTEM_OUT">
-        </Console>
-    </Appenders>
-    <Loggers>
-        <Root level="info" additivity="true">
-            <AppenderRef ref="console"/>
-        </Root>
-    </Loggers>
+<Configuration status="INFO" name="Immunization">
+  <Properties>
+    <Property name="filename">./logs/immunization.log</Property>
+  </Properties>
+  <Appenders>
+    <File name="vaccinestatus" fileName="logs/Vaccine-Status.log">
+      <PatternLayout>
+        <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+      </PatternLayout>
+    </File>
+  </Appenders>
+  <Appenders>
+    <Console name="console" target="SYSTEM_OUT">
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="info" additivity="true">
+      <AppenderRef ref="console"/>
+    </Root>
+  </Loggers>
 </Configuration>
+
