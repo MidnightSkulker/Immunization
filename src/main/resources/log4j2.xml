@@ -10,13 +10,9 @@
       </PatternLayout>
     </File>
   </Appenders>
-  <Appenders>
-    <Console name="console" target="SYSTEM_OUT">
-    </Console>
-  </Appenders>
   <Loggers>
     <Root level="info" additivity="true">
-      <AppenderRef ref="console"/>
+      <AppenderRef ref="vaccinestatus"/>
     </Root>
   </Loggers>
 </Configuration>
