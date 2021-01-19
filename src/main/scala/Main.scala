@@ -458,6 +458,8 @@ object Main extends App {
     val x1 = doseMaps(0)("dtap1")
     val x2 = doseMaps(1)("dtap2")
     println("======= > x1, x2 = ", x1, x2)
+    val logger = LoggerFactory.getLogger("Main")
+    logger.info("Current date and time " + DateTime.now())
 
     val sample: String = """[{
   "dob": "2011-08-08T00:00:00.000Z",

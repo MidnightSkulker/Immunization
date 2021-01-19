@@ -3,6 +3,7 @@ package rules
 // import util.control.Breaks._
 import models.model._
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 // Factors that influence an immunization status.
 class Factors(
@@ -85,6 +86,7 @@ class Rule(
   factors: Factors,
   condition: Function1[Factors, Boolean],
   status: VaccineStatuses) {
+  private val logger = LoggerFactory.getLogger(classOf[Rule])
 
   def factors(): Factors = factors
   def cond(): Boolean = condition(factors)
@@ -92,7 +94,7 @@ class Rule(
   def name(): String = name
   def status(): VaccineStatuses = status
   def callOut(name: String, factors: Factors): String =
-    name + factors.out() + " = " + this.cond() + "\n\t\t"
+    name + factors.out() + " = " + this.cond()
 
   def &&(rb: Rule): Rule = {
     val combinedName: String = this.name() + " && " + rb.name()
@@ -106,7 +108,7 @@ class Rule(
       factors = combinedFactors,
       condition = combinedCondition,
       status = combinedStatus)
-    println("\t<<" + callOut(combinedName, combinedFactors) + " -&& " + outStatus(combinedStatus) + ">>")
+    logger.info(callOut(combinedName, combinedFactors) + " -&& " + outStatus(combinedStatus))
     return ret
   }
   def ||(rb: Rule): Rule = {
@@ -114,7 +116,7 @@ class Rule(
     val combinedDescription: String = this.description() + " or " + rb.description()
     def combinedCondition(f: Factors): Boolean = this.cond() || rb.cond()
     val combinedFactors = this.factors ++ rb.factors // union of the two sets of factors
-    println("\t<<" + callOut(combinedName, combinedFactors) + " -|| " + outStatus(rb.status()) + ">>")
+    logger.info(callOut(combinedName, combinedFactors) + " -|| " + outStatus(rb.status()))
     new Rule(combinedName, combinedDescription, combinedFactors, combinedCondition, rb.status)
   }
   def unary_!(): Rule = {
@@ -122,12 +124,12 @@ class Rule(
     val combinedDescription = "not " + this.description()
     def combinedCondition(f: Factors): Boolean = !this.cond()
     val combinedStatus: VaccineStatuses = if (!this.cond()) NA else this.status()
-    println("\t<<" + callOut(combinedName, factors) + " -! " + outStatus(combinedStatus) + ">>")
+    logger.info(callOut(combinedName, factors) + " -! " + outStatus(combinedStatus))
     new Rule(combinedName, combinedDescription, factors, combinedCondition, combinedStatus)
   }
   def condStatus(f: Factors): VaccineStatuses = {
     val ret: VaccineStatuses = if (condition(factors)) status else NA
-    println(name() + " ==> " + outStatus(ret))
+    logger.info(name() + " ==> " + outStatus(ret))
     return ret
   }
   def applyRule(): RuleResult = new RuleResult(this.description(), factors, condStatus(factors))
@@ -169,7 +171,6 @@ class Rules(rules: List[Rule]) {
           (NA, "No rule matched") // Exactly one rule should match.
         }
         case 1 => {
-          println("====> One NA rule, " + (nonNAResults(0).status, nonNAResults(0).description))
           (nonNAResults(0).status, nonNAResults(0).description)
         }
         case default => (Error, "More than one rule matched")

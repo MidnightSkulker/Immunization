@@ -6,7 +6,7 @@
   <Appenders>
     <File name="vaccinestatus" fileName="logs/Vaccine-Status.log">
       <PatternLayout>
-        <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+        <Pattern>%p %c %m%n</Pattern>
       </PatternLayout>
     </File>
   </Appenders>
