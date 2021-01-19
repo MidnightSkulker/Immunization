@@ -37,57 +37,56 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
   private val logger = LoggerFactory.getLogger(classOf[DTAP])
 
   override def immunizationStatus (): RulesResult = {
-    logger.info("LOG LOG Class DTAP immunization Status")
+    logger.info("---------- Class DTAP immunization Status ----------")
 
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
-    // val rule02: Rule = doseCountRule(doses, 0) && !newBornRule(dob, Incomplete)
-    // // One dose, first dose less than 2 months old or
-    // // child is less than 4 months of age.
-    // val rule11 =
-    //   doseCountRule(doses, 1) && youngerThanRule(dob, 4) && recentlyRule(firstDose, 2, UpToDate)
-    // // One dose, first does more than two months ago or child less than 4 months old.
-    // val rule12 =
-    //   doseCountRule(doses, 1) && (!youngerThanRule(dob, 4) || !recentlyRule(firstDose, 2, UpToDate))
-    // // 2 doses, dose 1 received at or after 1st birthday and
-    // // dose 2 received less than 12 months ago.
-    // val rule21 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
-    // // 2 doses, dose 1 received at or after 1st birthday and
-    // // dose 2 received more than 12 months ago.
+    val rule02: Rule = doseCountRule(doses, 0) && !newBornRule(dob, Incomplete)
+    // One dose, first dose less than 2 months old or
+    // child is less than 4 months of age.
+    val rule11 =
+      doseCountRule(doses, 1) && youngerThanRule(dob, 4) && recentlyRule(firstDose, 2, UpToDate)
+    // One dose, first does more than two months ago or child less than 4 months old.
+    val rule12 =
+      doseCountRule(doses, 1) && (!youngerThanRule(dob, 4) || !recentlyRule(firstDose, 2, UpToDate))
+    // 2 doses, dose 1 received at or after 1st birthday and
+    // dose 2 received less than 12 months ago.
+    val rule21 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
+    // 2 doses, dose 1 received at or after 1st birthday and
+    // dose 2 received more than 12 months ago.
     val rule22 = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && !recentlyRule(secondDose, 12, Incomplete)
-    // // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
-    // val rule23 = doseCountRule(doses, 2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
-    // // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
-    // val rule24 = doseCountRule(doses, 2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && (!recentlyRule(secondDose, 12, Incomplete))
-    // // 2 doses, dose 2 received less than 2 months ago or
-    // // child is less than 6 months old.
-    // val rule25 = doseCountRule(doses, 2) && recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
-    // // 2 doses, dose 2 received more than 2 months ago or
-    // // child is less than 6 months old.
-    // val rule26 = doseCountRule(doses, 2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
-    // // 3 doses, third dose received after 7th birthday.
-    // val rule31 = doseCountRule(doses, 3) && doseAfterRule(dob, thirdDose, 84, Complete)
-    // // 3 doses, third dose received less than 12 months ago.
-    // val rule32 = doseCountRule(doses, 3) && recentlyRule(thirdDose, 12, UpToDate)
-    // // 3 doses, first does received at or after 1st birthday and child is less than 4 years old.
-    // val rule33 = doseCountRule(doses, 3) && doseAfterRule(dob, firstDose, 12) && youngerThanRule(dob, 48, UpToDate)
-    // // 3 doses, child is less than 18 months old.
-    // val rule34 = doseCountRule(doses, 3) && youngerThanRule(dob, 18, UpToDate)
-    // // 3 doses, third dose recceived 12 months or more ago and child is 18 months old or older.
-    // val rule35 = doseCountRule(doses, 3) && (!recentlyRule(thirdDose, 12) || olderThanRule(dob, 18, Incomplete))
-    // // 4 doses, fourth Dose was given at or after 4th Birthday
-    // val rule41 = doseCountRule(doses, 4) && doseAfterRule(dob, firstDose, 48, Complete)
-    // // 4 doses, fourth dose was before 4th Birthday and child is less than Kindergarten age (5).
-    // val rule42 = doseCountRule(doses, 4) && doseBeforeRule(dob, fourthDose, 48) && youngerThanRule(dob, 60, UpToDate)
+    // 2 doses, child is 7 years or older and dose 2 received less than 12 months ago.
+    val rule23 = doseCountRule(doses, 2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && recentlyRule(secondDose, 12, UpToDate)
+    // 2 doses, child is 7 years or older and dose 2 received more than 12 months ago.
+    val rule24 = doseCountRule(doses, 2) && olderThanRule(dob, 84) && doseAfterRule(dob, firstDose, 84) && (!recentlyRule(secondDose, 12, Incomplete))
+    // 2 doses, dose 2 received less than 2 months ago or
+    // child is less than 6 months old.
+    val rule25 = doseCountRule(doses, 2) && recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+    // 2 doses, dose 2 received more than 2 months ago or
+    // child is less than 6 months old.
+    val rule26 = doseCountRule(doses, 2) && !recentlyRule(secondDose, 2) && youngerThanRule(dob, 6, Incomplete)
+    // 3 doses, third dose received after 7th birthday.
+    val rule31 = doseCountRule(doses, 3) && doseAfterRule(dob, thirdDose, 84, Complete)
+    // 3 doses, third dose received less than 12 months ago.
+    val rule32 = doseCountRule(doses, 3) && recentlyRule(thirdDose, 12, UpToDate)
+    // 3 doses, first does received at or after 1st birthday and child is less than 4 years old.
+    val rule33 = doseCountRule(doses, 3) && doseAfterRule(dob, firstDose, 12) && youngerThanRule(dob, 48, UpToDate)
+    // 3 doses, child is less than 18 months old.
+    val rule34 = doseCountRule(doses, 3) && youngerThanRule(dob, 18, UpToDate)
+    // 3 doses, third dose recceived 12 months or more ago and child is 18 months old or older.
+    val rule35 = doseCountRule(doses, 3) && (!recentlyRule(thirdDose, 12) || olderThanRule(dob, 18, Incomplete))
+    // 4 doses, fourth Dose was given at or after 4th Birthday
+    val rule41 = doseCountRule(doses, 4) && doseAfterRule(dob, firstDose, 48, Complete)
+    // 4 doses, fourth dose was before 4th Birthday and child is less than Kindergarten age (5).
+    val rule42 = doseCountRule(doses, 4) && doseBeforeRule(dob, fourthDose, 48) && youngerThanRule(dob, 60, UpToDate)
     // 4 doses, fourth dose was received before 4th birthday and
     // child is kindergarten of higher grade.
     val rule43 = doseCountRule(doses, 4) && doseBeforeRule(dob, fourthDose, 48) && olderThanRule(dob, 60, Incomplete)
-    // val rule51 = doseCountRule(doses, 5, Complete)
+    val rule51 = doseCountRule(doses, 5, Complete)
 
-    // val rules: Rules = new Rules(
-    //   rules = List(rule01, rule02, rule11, rule12, rule21, rule22, rule23,
-    //     rule24, rule25, rule26, rule31, rule32, rule33, rule34,
-    //     rule35, rule41, rule42, rule43, rule51))
-    val rules: Rules = new Rules(rules = List(rule01, rule22, rule43))
+    val rules: Rules = new Rules(
+      rules = List(rule01, rule02, rule11, rule12, rule21, rule22, rule23,
+        rule24, rule25, rule26, rule31, rule32, rule33, rule34,
+        rule35, rule41, rule42, rule43, rule51))
     val decision: RulesResult = rules.documentedDecision()
     println("DTAP Decision: " + outStatus(decision.finalStatus()))
     System.exit(-4)
