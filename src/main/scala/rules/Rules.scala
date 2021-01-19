@@ -150,6 +150,7 @@ class RulesResult(
 // Each rule in the rule set considers a different case, and renders a decision.
 // If none of the rules render a decision, the vaccine status will be Incomplete.
 class Rules(rules: List[Rule]) {
+  private val logger = LoggerFactory.getLogger(classOf[Rules])
   // Combine the sets of factors from a list of rules into a single set of factors
   def listFactors(): Factors =
     rules.foldLeft (new Factors()) {(acc, r) => acc ++ r.factors()}
@@ -161,9 +162,9 @@ class Rules(rules: List[Rule]) {
   def documentedDecision(): RulesResult = {
     // Apply each of the rules.
     val results: List[RuleResult] = applyRules()
-    println("=====> Results(" + results.size + ") || " + results.map(outRuleResult).mkString("\n----- "))
+    logger.debug("=====> Results(" + results.size + ") || " + results.map(outRuleResult).mkString("\n----- "))
     val nonNAResults: List[RuleResult] = results.filter(r => r.status != NA)
-    println("====> number of non NA results: " + nonNAResults.size)
+    logger.debug("====> number of non NA results: " + nonNAResults.size)
     val (finalStatus, report) =
       nonNAResults.size match {
         case 0 => {
@@ -174,7 +175,7 @@ class Rules(rules: List[Rule]) {
         }
         case default => (Error, "More than one rule matched")
       }
-    println("finalStatus = " + outStatus(finalStatus) + " || report = " + report)
+    logger.debug("finalStatus = " + outStatus(finalStatus) + " || report = " + report)
     return new RulesResult(finalStatus, report, this.listFactors(), results)
   }
   def report(): String = documentedDecision().out()
