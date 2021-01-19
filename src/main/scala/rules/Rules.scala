@@ -167,7 +167,6 @@ class Rules(rules: List[Rule]) {
     val (finalStatus, report) =
       nonNAResults.size match {
         case 0 => {
-          println("====> No rule matched")
           (NA, "No rule matched") // Exactly one rule should match.
         }
         case 1 => {
@@ -185,10 +184,8 @@ trait SpecificRules {
   def naRule(name: String, factors: Factors): Rule = {
     new Rule(name = name, description = "None passed in", factors = factors, condition = factors => false, status = NA)
   }
-  def errorRule(error: String, factors: Factors): Rule = {
-    println("\nERROR: " + error + "\n")
+  def errorRule(error: String, factors: Factors): Rule =
     new Rule(name = error, description = error, factors = factors, condition = factors => false, status = Error)
-  }
   def doseCountRule(doses: DateMap, numberOfDoses: Int, status: VaccineStatuses = NA): Rule =
     new Rule(
       name = "doseCountRule",
@@ -197,7 +194,6 @@ trait SpecificRules {
       factors => factors.numberOfDoses == numberOfDoses,
       status = status)
   def olderThanRule(dob: DateTime, ageMonth: Int, status: VaccineStatuses = NA): Rule = {
-    // println("##### olderThanRule, ageMonth = " + ageMonth + ", dob = " + dob + ", outcome = " + dob.plusMonths(ageMonth).isBefore(DateTime.now())) + ", status = " + status
     new Rule(
       name = "olderThanRule",
       description = s"Child is older than $ageMonth months",
@@ -266,7 +262,6 @@ trait SpecificRules {
     status: VaccineStatuses = NA): Rule =
     dose match {
       case Some(d) => {
-        // println("##### doseBeforeRule, ageMonth = " + ageMonth + ", dob = " + dob + ", dose = " + d + ", outcome = " + d.isBefore(dob.plusMonths(ageMonth))) + ", status = " + status
         new Rule(
           name = "doseBeforeRule",
           description = s"Dose is given before age $ageMonth months",
