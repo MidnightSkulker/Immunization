@@ -234,7 +234,6 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     val decision: RulesResult = rules.documentedDecision()
     println("Varicella Decision: " + outStatus(decision.finalStatus()))
     logger.info("Varicella Decision: " + outStatus(decision.finalStatus()))
-    System.exit(-4)
     return decision
   }
 }
@@ -242,6 +241,7 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
 // Vaccination status rules for MMR (Measles, Mumps, and Rubella)
 class MMR (dob: DateTime, doses: DateMap)
   extends Vaccine("mmr", dob, doses, 2) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[MMR])
   override def immunizationStatus (): RulesResult = {
     // 0 doses, child is under 15 months old
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 15, UpToDate)
@@ -280,6 +280,9 @@ class MMR (dob: DateTime, doses: DateMap)
     rules = List(rule01, rule02, rule11, rule12, rule13, rule14, rule15,
       rule21, rule22, rule23, rule24, rule25, rule26, rule31))
     val decision: RulesResult = rules.documentedDecision()
+    println("MMR Decision: " + outStatus(decision.finalStatus()))
+    logger.info("MMR Decision: " + outStatus(decision.finalStatus()))
+    System.exit(-4)
     return decision
   }
 }
