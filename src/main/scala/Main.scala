@@ -192,7 +192,6 @@ class Polio (dob: DateTime, doses: DateMap)
     val decision: RulesResult = rules.documentedDecision()
     println("Polio Decision: " + outStatus(decision.finalStatus()))
     logger.info("Polio Decision: " + outStatus(decision.finalStatus()))
-    System.exit(-4)
     return decision
     }
 }
@@ -200,7 +199,9 @@ class Polio (dob: DateTime, doses: DateMap)
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     extends Vaccine("varicella", dob, doses, 2) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[Varicella])
   override def immunizationStatus (): RulesResult = {
+    logger.info("---------- Class Varicella immunization Status ----------\n\n")
     val ruleChickenPox = diseaseHistoryRule("Chicken Pox", diseaseHistory, Complete)
     // 0 doses, child is less than 18 months old.
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 18, UpToDate)
@@ -216,7 +217,7 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     // 1 dose, first dose at or after 13 years of age and less than two months ago.
     val rule15: Rule = doseCountRule(doses, 1) && olderThanRule(dob, 13 * 12) && !recentlyRule(firstDose, 2, Incomplete)
     val rule16: Rule = doseCountRule(doses, 1, Incomplete)
-    // 2 doses, At least one dose given between 12 months of age and 12 years of age
+    // 2 doses, At least one dose given between 12 months of age and 12 years of age ?????
     val rule21: Rule = doseCountRule(doses, 2) && doseAfterRule(dob, firstDose, 12) && doseBeforeRule(dob, firstDose, 12 * 12, Complete)
     // 2 doses, First dose given after age 13 and second dose given more than 24
     // days after the first dose.
@@ -225,12 +226,15 @@ class Varicella (dob: DateTime, diseaseHistory: List[String], doses: DateMap)
     val rule23: Rule =  doseCountRule(doses, 2) && doseBeforeDoseRule(firstDose, secondDose, 24) && recentlyRule(secondDose, 2, UpToDate)
     // 2 doses Second dose prior to 12 months of age
     val rule24: Rule = doseCountRule(doses, 2) && doseBeforeRule(dob, secondDose, 12) && olderThanRule(dob, 12, Incomplete)
-    val rule31: Rule = doseCountRule(doses, Complete)
+    val rule31: Rule = doseCountRule(doses, 3, Complete)
 
     val rules: Rules = new Rules(
       rules = List(ruleChickenPox, rule01, rule02, rule11, rule12, rule13, rule14, rule15,
         rule21, rule22, rule23, rule24, rule31))
     val decision: RulesResult = rules.documentedDecision()
+    println("Varicella Decision: " + outStatus(decision.finalStatus()))
+    logger.info("Varicella Decision: " + outStatus(decision.finalStatus()))
+    System.exit(-4)
     return decision
   }
 }
@@ -408,7 +412,6 @@ class Student(jsonMap: JsonMap){
     val polioResult: RulesResult = polio.immunizationStatus()
     println("\nPolio Status with " + polioShots.size + " shots for " + fullName + " is " + polioResult.out() + "\n")
     val varicella: Varicella = new Varicella(dob, List(), varicellaShots)
-    println("varicella shots for " + fullName + " are " + varicellaShots + " --- " + varicellaShots.size)
     val varicellaResult: RulesResult = varicella.immunizationStatus()
     println("\nvaricella Status for " + fullName + " is " + varicellaResult.out() + "\n")
     val mmr: MMR = new MMR(dob, mmrShots)
