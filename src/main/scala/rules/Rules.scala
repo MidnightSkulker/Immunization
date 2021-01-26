@@ -123,7 +123,7 @@ class Rule(
     val combinedName: String = "!" + this.name()
     val combinedDescription = "not " + this.description()
     def combinedCondition(f: Factors): Boolean = !this.cond()
-    val combinedStatus: VaccineStatuses = if (!this.cond()) NA else this.status()
+    val combinedStatus: VaccineStatuses = if (!this.cond()) this.status else NA
     logger.info(callOut(combinedName, factors) + " -! " + outStatus(combinedStatus))
     new Rule(combinedName, combinedDescription, factors, combinedCondition, combinedStatus)
   }
@@ -162,7 +162,7 @@ class Rules(rules: List[Rule]) {
   def documentedDecision(): RulesResult = {
     // Apply each of the rules.
     val results: List[RuleResult] = applyRules()
-    logger.debug("=====> Results(" + results.size + ") || " + results.map(outRuleResult).mkString("\n----- "))
+    logger.debug("=====> Results(" + results.size + ")\n" + results.map(outRuleResult).mkString("\n----- "))
     val nonNAResults: List[RuleResult] = results.filter(r => r.status != NA)
     logger.debug("====> number of non NA results: " + nonNAResults.size)
     val (finalStatus, report) =

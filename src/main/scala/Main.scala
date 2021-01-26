@@ -88,8 +88,6 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
         rule24, rule25, rule26, rule31, rule32, rule33, rule34,
         rule35, rule41, rule42, rule43, rule51))
     val decision: RulesResult = rules.documentedDecision()
-    println("DTAP Decision: " + outStatus(decision.finalStatus()))
-    System.exit(-4)
     return decision
   }
 }
@@ -97,9 +95,10 @@ class DTAP (name: String, dob: DateTime, doses: DateMap)
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class HIB (dob: DateTime, doses: DateMap)
     extends Vaccine("hib", dob, doses, 5) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[HIB])
+
   override def immunizationStatus (): RulesResult = {
-    // Not required for 5 years and older.
-    val rule5 = olderThanRule(dob, 60, Complete)
+    logger.info("---------- Class HIB immunization Status ----------\n\n")
     // Zero doses, child is less than 2 months old, HIB is not needed yet.
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
     // Zero doses, child is more than 4 years old, it is not required.
@@ -136,13 +135,16 @@ class HIB (dob: DateTime, doses: DateMap)
     val rule34 = doseCountRule(doses, 3) && youngerThanRule(dob, 60) && doseAfterRule(dob, thirdDose, 12, Complete)
     val rule35 = doseCountRule(doses, 3) && youngerThanRule(dob, 60) && doseBeforeRule(dob, thirdDose, 12, UpToDate)
     val rule36 = doseCountRule(doses, 3, Incomplete)
-    val rule41 = doseCountRule(doses, 4, Complete)
+    // Not required for 5 years and older.
+    // 4 doses complete at any age.
+    val rule41 = doseCountRule(doses, 4, Complete) || olderThanRule(dob, 60, Complete)
     val rules: Rules = new Rules(
-      rules = List(rule5, rule01, rule02, rule03,
+      rules = List(rule01, rule02, rule03,
         rule11, rule12, rule13, rule14, rule15, rule16,
         rule21, rule22, rule23, rule24, rule25,
         rule31, rule32, rule33, rule34, rule35, rule36, rule41))
     val decision: RulesResult = rules.documentedDecision()
+    println("HIB Decision: " + outStatus(decision.finalStatus()))
     return decision
   }
 }
@@ -150,7 +152,9 @@ class HIB (dob: DateTime, doses: DateMap)
 // Vaccination status rules for HIB (Haemophilus Influenza type B)
 class Polio (dob: DateTime, doses: DateMap)
     extends Vaccine("polio", dob, doses, 5) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[Polio])
   override def immunizationStatus (): RulesResult = {
+    logger.info("---------- Class Polio immunization Status ----------\n\n")
     // If child is more than 18 years old, Polio vaccine is not needed yet.
     val rule18: Rule = olderThanRule(dob, 18 * 12, Complete)
     val rule01: Rule = doseCountRule(doses, 0) && newBornRule(dob, UpToDate)
@@ -183,6 +187,9 @@ class Polio (dob: DateTime, doses: DateMap)
       rules = List(rule18, rule01, rule02, rule11, rule12, rule13,
         rule21, rule22, rule23, rule31, rule32, rule33, rule34, rule41))
     val decision: RulesResult = rules.documentedDecision()
+    println("Polio Decision: " + outStatus(decision.finalStatus()))
+    logger.info("Polio Decision: " + outStatus(decision.finalStatus()))
+    System.exit(-4)
     return decision
     }
 }
@@ -347,6 +354,7 @@ class HEPB (dob: DateTime, doses: DateMap)
 }
 
 class Student(jsonMap: JsonMap){
+  private val logger = LoggerFactory.getLogger(classOf[Student])
   def filterShots(jm: JsonMap, shotRegex: String): JsonMap =
     jm.filterKeys(_.matches(shotRegex))
   val dob: DateTime = new DateTime(jsonMap("dob"))
@@ -422,21 +430,19 @@ class Student(jsonMap: JsonMap){
     val hibShots: DateMap = convertDateStrings(filterShots(jsonMap, "hib.*"))
     val hepaShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepA.*"))
     val hepbShots: DateMap = convertDateStrings(filterShots(jsonMap, "hepB.*"))
-    println("Name: " + fullName + "\t\tDOB: " + dob)
-    println("DTAP Shots(" + dtapShots.size + "): " + dtapShots)
-    println("Polio Shots: \t" + polioShots)
-    println("MMR Shots: \t" + mmrShots)
-    println("Varicella Shots: \t" + varicellaShots)
-    println("HIB Shots: \t" + hibShots)
-    println("Hepatitus A Shots: \t" + hepaShots)
-    println("Hepatitus B Shots: \t" + hepbShots)
-    println()
+    logger.info("Name: " + fullName + "\tDOB: " + dob)
+    logger.info("\nDTAP Shots(" + dtapShots.size + "): " + dtapShots)
+    logger.info("\nPolio Shots: \t" + polioShots)
+    logger.info("\nMMR Shots: \t" + mmrShots)
+    logger.info("Varicella Shots: \t" + varicellaShots)
+    logger.info("HIB Shots: \t" + hibShots)
+    logger.info("Hepatitus A Shots: \t" + hepaShots)
+    logger.info("Hepatitus B Shots: \t" + hepbShots)
   }
 }
 
 class Students (students: JsonMaps) {
   def processOneStudent(studentJson: JsonMap): (String, VaccineStatuses) = {
-    println("Processing Student")
     val student: Student = new Student(studentJson)
     student.printStudent()
     val results:List[RulesResult] = student.gatherStatus()
@@ -455,11 +461,9 @@ object Main extends App {
     // Object to parse the JSON information.
     val parser = new json.JsonDoses ("inputs/ImmunizationData.json")
     val doseMaps: JsonMaps = parser.mapify("inputs/ImmunizationData.json")
-    val x1 = doseMaps(0)("dtap1")
-    val x2 = doseMaps(1)("dtap2")
-    println("======= > x1, x2 = ", x1, x2)
+
     val logger = LoggerFactory.getLogger("Main")
-    logger.info("Current date and time " + DateTime.now())
+    logger.info("\n\n\n-------------------- " + DateTime.now() + "-------------------\n\n\n\n\n")
 
     val sample: String = """[{
   "dob": "2011-08-08T00:00:00.000Z",
@@ -513,17 +517,17 @@ object Main extends App {
     // The empty "dtap5" for Aaditi does not show up in the map, so no need for null values.
     val sampleAst: spray.json.JsValue = sample.parseJson
     val sampleJson: String = sampleAst.prettyPrint
-    println("\n------ sampleJson > " + sampleJson)
+    logger.debug("\n------ sampleJson > " + sampleJson)
     val sampleMap: JsonMaps = sampleAst.convertTo[JsonMaps]
-    println("\n------ sampleMap > " + sampleMap)
+    logger.debug("\n------ sampleMap > " + sampleMap)
     val student1: JsonMap = sampleMap(0)
-    println("\n------ student1 > " + student1)
+    logger.debug("\n------ student1 > " + student1)
     val sampleStudents = new Students(sampleMap)
-    println("\n------ sampleStudents\n")
+    logger.debug("\n------ sampleStudents\n")
     val processedStudents : List[(String, VaccineStatuses)] =
       sampleStudents.processStudents(sampleMap)
     def outProcessedStudent(p: (String, VaccineStatuses)) = (p._1, outStatus(p._2))
-    println("\n------ processedStudents > " + processedStudents.map(p => outProcessedStudent(p)))
+    logger.debug("\n------ processedStudents > " + processedStudents.map(p => outProcessedStudent(p)))
 
     // println("\n------ 2000 characters from > " + filename)
     // print(glob.take(2000))

@@ -11,7 +11,7 @@
     </File>
   </Appenders>
   <Loggers>
-    <Root level="info" additivity="true">
+    <Root level="debug" additivity="true">
       <AppenderRef ref="vaccinestatus"/>
     </Root>
   </Loggers>
