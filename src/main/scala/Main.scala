@@ -243,6 +243,7 @@ class MMR (dob: DateTime, doses: DateMap)
   extends Vaccine("mmr", dob, doses, 2) with SpecificRules {
   private val logger = LoggerFactory.getLogger(classOf[MMR])
   override def immunizationStatus (): RulesResult = {
+    logger.info("---------- Class MMR immunization Status ----------\n\n")
     // 0 doses, child is under 15 months old
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 15, UpToDate)
     // 0 doses, child is more than 15 months old
@@ -282,7 +283,6 @@ class MMR (dob: DateTime, doses: DateMap)
     val decision: RulesResult = rules.documentedDecision()
     println("MMR Decision: " + outStatus(decision.finalStatus()))
     logger.info("MMR Decision: " + outStatus(decision.finalStatus()))
-    System.exit(-4)
     return decision
   }
 }
@@ -290,7 +290,9 @@ class MMR (dob: DateTime, doses: DateMap)
 // Vaccination status rules for HEPA (Hepatitis A)
 class HEPA (dob: DateTime, doses: DateMap)
     extends Vaccine("hepA", dob, doses, 4) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[HEPA])
   override def immunizationStatus (): RulesResult = {
+    logger.info("---------- Class HEPA immunization Status ----------\n\n")
     // zero doses, child is under 18 months old
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 18, UpToDate)
     val rule02: Rule = doseCountRule(doses, 0) && !youngerThanRule(dob, 18, UpToDate)
@@ -311,14 +313,16 @@ class HEPA (dob: DateTime, doses: DateMap)
     val rule22: Rule = doseCountRule(doses, 2) && doseBeforeRule(dob, firstDose, 12) && recentlyRule(secondDose, 12, UpToDate)
     // 2 doses, first dose received priot to 12 months of age and dose 2
     // received 12 months of more ago.
-    val rule23: Rule = doseCountRule(doses, 2, Incomplete)
     val rule31: Rule = doseCountRule(doses, 3, Complete)
     val rule41: Rule = doseCountRule(doses, 4, Complete)
 
     val rules: Rules = new Rules(
       rules = List(rule01, rule02, rule11, rule12, rule13, rule14,
-        rule21, rule22, rule23, rule31, rule41))
+        rule21, rule22, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
+    println("HEPA Decision: " + outStatus(decision.finalStatus()))
+    logger.info("HEPA Decision: " + outStatus(decision.finalStatus()))
+    System.exit(-4)
     return decision
   }
 }
@@ -326,7 +330,9 @@ class HEPA (dob: DateTime, doses: DateMap)
 // Vaccination status rules for HEPB (Hepatitis B)
 class HEPB (dob: DateTime, doses: DateMap)
     extends Vaccine("hepB", dob, doses, 3) with SpecificRules {
+  private val logger = LoggerFactory.getLogger(classOf[HEPB])
   override def immunizationStatus (): RulesResult = {
+    logger.info("---------- Class HEPB immunization Status ----------\n\n")
     // 0 doses, child is under 2 months old.
     val rule01: Rule = doseCountRule(doses, 0) && youngerThanRule(dob, 2, UpToDate)
     // 0 doses, child is over 2 months old.
@@ -352,13 +358,14 @@ class HEPB (dob: DateTime, doses: DateMap)
     val rule23: Rule = doseCountRule(doses, 2) && recentlyRule(secondDose, 5, UpToDate)
     // 2 doses, second dose after 5 months or more ago and child is less than 18 months old.
     val rule24: Rule = doseCountRule(doses, 2) && !recentlyRule(secondDose, 5) && youngerThanRule(dob, 18, UpToDate)
-    val rule25: Rule = doseCountRule(doses, 2, Incomplete) // else
     val rule31: Rule = doseCountRule(doses, 3, Complete)
     val rule41: Rule = doseCountRule(doses, 4, Complete)
     val rules: Rules = new Rules(
       rules = List(rule01, rule02, rule11, rule12, rule13, rule14, rule15,
-        rule21, rule22, rule23, rule24, rule25, rule31, rule41))
+        rule21, rule22, rule23, rule24, rule31, rule41))
     val decision: RulesResult = rules.documentedDecision()
+    println("HEPB Decision: " + outStatus(decision.finalStatus()))
+    logger.info("HEPB Decision: " + outStatus(decision.finalStatus()))
     return decision
     }
 }
