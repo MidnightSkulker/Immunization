@@ -322,7 +322,6 @@ class HEPA (dob: DateTime, doses: DateMap)
     val decision: RulesResult = rules.documentedDecision()
     println("HEPA Decision: " + outStatus(decision.finalStatus()))
     logger.info("HEPA Decision: " + outStatus(decision.finalStatus()))
-    System.exit(-4)
     return decision
   }
 }
